@@ -6,6 +6,7 @@ Date: 2022/10/11
 ****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #ifndef YYSTYPE
 #define YYSTYPE double
 #endif
@@ -15,8 +16,7 @@ FILE* yyin;
 void yyerror(const char* s);
 %}
 
-%token ADD SUB MUL DIV LKH RKH
-%token NUMBER
+%token ADD SUB MUL DIV NUMBER
 %left ADD SUB
 %left MUL DIV
 %right UMINUS
@@ -33,11 +33,22 @@ expr	:	expr ADD expr	{ $$ = $1 + $3; }
 		|	expr SUB expr	{ $$ = $1 - $3; }
 		|	expr MUL expr	{ $$ = $1 * $3; }
 		|	expr DIV expr	{ $$ = $1 / $3; }
-		|	LKH expr RKH	{ $$ = $2; }
+		|	'(' expr ')'	{ $$ = $2; }
 		|	SUB expr %prec UMINUS	{ $$ = -$2; }
 		|	NUMBER
 		;
 
+/*NUMBER	:	'0'				{ $$ = 0.0; }
+		|	'1'				{ $$ = 1.0; }
+		|	'2'				{ $$ = 2.0; }
+		|	'3'				{ $$ = 3.0; }
+		|	'4'				{ $$ = 4.0; }
+		|	'5'				{ $$ = 5.0; }
+		|	'6'				{ $$ = 6.0; }
+		|	'7'				{ $$ = 7.0; }
+		|	'8'				{ $$ = 8.0; }
+		|	'9'				{ $$ = 9.0; }
+		;*/
 		
 %%
 
@@ -46,46 +57,34 @@ expr	:	expr ADD expr	{ $$ = $1 + $3; }
 int yylex()
 {	
 	//place your token retrieving code here
-	char c;
-	c=getchar();
-	while(c==' '||c=='\t'||c=='\n')
-		c=getchar();
-		
-	if(c>='0'&&c<='9')
-	{ 
-		yylval=c-'0';
-		c=getchar();
-		while(c==' '||c=='\t'||c=='\n')
-			c=getchar();
-		while(c>='0'&&c<='9')
-		{
-			yylval = yylval*10+c-'0';
-			c=getchar();
-			while(c==' '||c=='\t'||c=='\n')
-				c=getchar();
+	int t;
+	while(1){
+		t=getchar();
+		if(t==' '||t=='\t'||t=='\n');
+		else if(isdigit(t)){
+			yylval=0;
+			while(isdigit(t)){
+				yylval=yylval*10+t-'0';
+				t=getchar();
+			}
+			ungetc(t,stdin);
+			return NUMBER;
 		}
-		ungetc(c,stdin);
-		return NUMBER;
-	}
-	else
-	{
-		switch(c)
-		{ 
-			case '+':
-				return ADD;
-			case '-':
-				return SUB;
-			case '*':
-				return MUL;
-			case '/':
-				return DIV;
-			case '(':
-				return LKH;
-			case ')':
-				return RKH;
+		else{
+			switch(t){
+				case '+':
+					return ADD;
+				case '-':
+					return SUB;
+				case '*':
+					return MUL;
+				case '/':
+					return DIV;
+				default:
+					return t;
+			}
 		}
 	}
-	return c;
 }
 
 int main(void)
