@@ -16,7 +16,7 @@ FILE* yyin;
 void yyerror(const char* s);
 %}
 
-%token ADD SUB MUL DIV NUMBER
+%token ADD SUB MUL DIV LKH RKH NUMBER
 %left ADD SUB
 %left MUL DIV
 %right UMINUS
@@ -33,7 +33,7 @@ expr	:	expr ADD expr	{ $$ = $1 + $3; }
 		|	expr SUB expr	{ $$ = $1 - $3; }
 		|	expr MUL expr	{ $$ = $1 * $3; }
 		|	expr DIV expr	{ $$ = $1 / $3; }
-		|	'(' expr ')'	{ $$ = $2; }
+		|	LKH expr RKH	{ $$ = $2; }
 		|	SUB expr %prec UMINUS	{ $$ = -$2; }
 		|	NUMBER
 		;
@@ -80,6 +80,10 @@ int yylex()
 					return MUL;
 				case '/':
 					return DIV;
+				case '(':
+					return LKH;
+				case ')':
+					return RKH;
 				default:
 					return t;
 			}
