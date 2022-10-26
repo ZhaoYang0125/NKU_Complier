@@ -325,6 +325,14 @@ commentend "*/"
         return SEMICOLON;
     #endif
 }
+"," {
+    #ifdef ONLY_FOR_LEX
+        DEBUG_FOR_LAB4("COMMA\t,");
+        offset++;
+    #else
+        return COMMA;
+    #endif
+}
 "(" {
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("LPAREN\t(");
