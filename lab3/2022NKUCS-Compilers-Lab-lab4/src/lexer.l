@@ -199,6 +199,7 @@ commentend "*/"
             if(symtable->installID(id1, entry)){
                 printf("true\t");
                 printf("%s\n",id);
+                sprintf(pointer_to_scope,"%p",entry);//                
             }
             else{
                 printf("false\n");
@@ -207,8 +208,8 @@ commentend "*/"
         }
         else{
             printf("exist\n");
+            sprintf(pointer_to_scope,"%p",symtable->lookUp(id1));//
         }
-        sprintf(pointer_to_scope,"%p",symtable);
         DEBUG_FOR_LAB4("ID    \t"+id1);
         strcpy(pointer_to_scope,"");
         offset+=strlen(yytext);
