@@ -18,13 +18,18 @@
     #ifdef ONLY_FOR_LEX
     #include <ostream>
     #include <fstream>
+    #include "symTable.h"
     using namespace std;
     extern FILE *yyin; 
     extern FILE *yyout;
     int offset=0;
+    int level=0;
+
+    symTable* symtable=new symTable();
+    char pointer_to_scope[13]="";
 
     void DEBUG_FOR_LAB4(std::string s){
-        std::string DEBUG_INFO = "[DEBUG LAB4]: \t" + s+"\t" +to_string(yylineno) +"\t"+to_string(offset)+"\n";
+        std::string DEBUG_INFO = "[DEBUG LAB4]: \t" + s+"\t" +to_string(yylineno) +"\t"+to_string(offset)+"\t"+pointer_to_scope+"\n";
         fputs(DEBUG_INFO.c_str(), yyout);
     }
     #endif
@@ -77,7 +82,7 @@ commentend "*/"
             offset+=len;
             int n=strtol(yytext,NULL,8);
             string o=to_string(n);
-            DEBUG_FOR_LAB4("OCTAL\t" + o);
+            DEBUG_FOR_LAB4("OCTAL \t" + o);
         #else
             return OCTAL;
         #endif
@@ -98,7 +103,7 @@ commentend "*/"
     *   Q2: What is "INT" actually?
     */
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("INT\tint");
+        DEBUG_FOR_LAB4("INT   \tint");
         offset+=3;
     #else
         return INT;
@@ -106,7 +111,7 @@ commentend "*/"
 }
 "void" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("VOID\tvoid");
+        DEBUG_FOR_LAB4("VOID  \tvoid");
         offset+=4;
     #else
         return VOID;
@@ -114,7 +119,7 @@ commentend "*/"
 }
 "if" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("IF\tif");
+        DEBUG_FOR_LAB4("IF    \tif");
         offset+=2;
     #else
         return IF;
@@ -122,7 +127,7 @@ commentend "*/"
 };
 "else" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("ELSE\telse");
+        DEBUG_FOR_LAB4("ELSE  \telse");
         offset+=4;
     #else
         return ELSE;
@@ -138,7 +143,7 @@ commentend "*/"
 }
 "main" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("MAIN\tmain");
+        DEBUG_FOR_LAB4("MAIN  \tmain");
         offset+=4;
     #else
         return main;
@@ -146,7 +151,7 @@ commentend "*/"
 }
 "while" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("WHILE\twhile");
+        DEBUG_FOR_LAB4("WHILE \twhile");
         offset+=5;
     #else
         return WHILE;
@@ -154,7 +159,7 @@ commentend "*/"
 }
 "float" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("FLOAT\tfloat");
+        DEBUG_FOR_LAB4("FLOAT \tfloat");
         offset+=5;
     #else
         return FLOAT;
@@ -170,7 +175,7 @@ commentend "*/"
 }
 "break" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("BREAK\tbreak");
+        DEBUG_FOR_LAB4("BREAK \tbreak");
         offset+=5;
     #else
         return BREAK;
@@ -189,9 +194,24 @@ commentend "*/"
         char* id = new char[strlen(yytext)+1];
         strcpy(id,yytext);
         string id1=string(id);
-        DEBUG_FOR_LAB4("ID\t"+id1);
+        if(symtable->lookUp(id1)==nullptr){
+            symEntry* entry=new symEntry(0, yylineno, offset);
+            if(symtable->installID(id1, entry)){
+                printf("true\t");
+                printf("%s\n",id);
+            }
+            else{
+                printf("false\n");
+                printf("%s\n",id);
+            }
+        }
+        else{
+            printf("exist\n");
+        }
+        sprintf(pointer_to_scope,"%p",symtable);
+        DEBUG_FOR_LAB4("ID    \t"+id1);
+        strcpy(pointer_to_scope,"");
         offset+=strlen(yytext);
-        delete id;
     #else
         return ID;
     #endif
@@ -207,10 +227,10 @@ commentend "*/"
 }
 "<" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("LESS\t<");
+        DEBUG_FOR_LAB4("LESS  \t<");
         offset++;
     #else
-        return LESS;
+        return LT;
     #endif
 }
 ">" {
@@ -218,7 +238,7 @@ commentend "*/"
         DEBUG_FOR_LAB4("GREATER\t>");
         offset++;
     #else
-        return GREATER;
+        return GT;
     #endif
 }
 "<=" {
@@ -226,7 +246,7 @@ commentend "*/"
         DEBUG_FOR_LAB4("LEQUAL\t<=");
         offset+=2;
     #else
-        return L_EQUAL;
+        return LE;
     #endif
 }
 ">=" {
@@ -234,15 +254,15 @@ commentend "*/"
         DEBUG_FOR_LAB4("GEQUAL\t<=");
         offset+=2;
     #else
-        return G_EQUAL;
+        return GE;
     #endif
 }
 "==" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("EQUAL\t<=");
+        DEBUG_FOR_LAB4("EQUAL \t<=");
         offset+=2;
     #else
-        return EQUAL;
+        return EQ;
     #endif
 }
 "!=" {
@@ -250,12 +270,12 @@ commentend "*/"
         DEBUG_FOR_LAB4("NEQUAL\t<=");
         offset+=2;
     #else
-        return NOT_EQUAL;
+        return NE;
     #endif
 }
 "+" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("ADD\t+");
+        DEBUG_FOR_LAB4("ADD   \t+");
         offset++;
     #else
         return ADD;
@@ -263,7 +283,7 @@ commentend "*/"
 }
 "-" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("SUB\t-");
+        DEBUG_FOR_LAB4("SUB   \t-");
         offset++;
     #else
         return SUB;
@@ -271,7 +291,7 @@ commentend "*/"
 }
 "*" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("MULT\t*");
+        DEBUG_FOR_LAB4("MULT  \t*");
         offset++;
     #else
         return MULT;
@@ -279,7 +299,7 @@ commentend "*/"
 }
 "/" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("DEV\t/");
+        DEBUG_FOR_LAB4("DEV   \t/");
         offset++;
     #else
         return DEV;
@@ -287,7 +307,7 @@ commentend "*/"
 }
 "%" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("MOD\t%");
+        DEBUG_FOR_LAB4("MOD   \t%");
         offset++;
     #else
         return MOD;
@@ -295,15 +315,15 @@ commentend "*/"
 }
 "&&" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("AND\t&&");
+        DEBUG_FOR_LAB4("AND   \t&&");
         offset+=2;
     #else
-        return MOD;
+        return AND;
     #endif
 }
 "||" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("OR\t||");
+        DEBUG_FOR_LAB4("OR    \t||");
         offset+=2;
     #else
         return OR;
@@ -311,7 +331,7 @@ commentend "*/"
 }
 "!" {
     #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("NOT\t!");
+        DEBUG_FOR_LAB4("NOT   \t!");
         offset+=1;
     #else
         return NOT;
@@ -323,14 +343,6 @@ commentend "*/"
         offset++;
     #else
         return SEMICOLON;
-    #endif
-}
-"," {
-    #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("COMMA\t,");
-        offset++;
-    #else
-        return COMMA;
     #endif
 }
 "(" {
@@ -369,6 +381,8 @@ commentend "*/"
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("LBRACE\t{");
         offset++;
+        symtable = new symTable(symtable);
+        level++;
     #else
         return LBRACE;
     #endif
@@ -377,6 +391,8 @@ commentend "*/"
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("RBRACE\t}");
         offset++;
+        symtable = symtable->getPrev();
+        level--;
     #else
         return RBRACE;
     #endif
@@ -403,7 +419,6 @@ int main(int argc, char **argv){
         fprintf(stderr, "No such file or directory: %s", argv[3]);
         exit(EXIT_FAILURE);
     }
-
     yylex();
     return 0;
 }
