@@ -18,15 +18,15 @@
     #ifdef ONLY_FOR_LEX
     #include <ostream>
     #include <fstream>
-    #include "symTable.h"
+    #include "symTable.h"//符号表
     using namespace std;
     extern FILE *yyin; 
     extern FILE *yyout;
-    int offset=0;
-    int level=0;
+    int offset=0;//偏移量
+    int level=0;//作用域
 
-    symTable* symtable=new symTable();
-    char pointer_to_scope[13]="";
+    symTable* symtable=new symTable();//符号表型的变量
+    char pointer_to_scope[13]="";//字符数组用于存放指针地址值
 
     void DEBUG_FOR_LAB4(std::string s){
         std::string DEBUG_INFO = "[DEBUG LAB4]: \t" + s+"\t" +to_string(yylineno) +"\t"+to_string(offset)+"\t"+pointer_to_scope+"\n";
@@ -35,16 +35,15 @@
     #endif
 %}
 
-DECIMIAL ([1-9][0-9]*|0)
-OCTAL [0]([1-7][0-7]*|0)
-HEXADECIMIAL  ((0x)[[:xdigit:]]*)
-ID [[:alpha:]_][[:alpha:][:digit:]_]*
-EOL (\r\n|\n|\r)
+DECIMIAL ([1-9][0-9]*|0)//十进制
+OCTAL [0]([1-7][0-7]*|0)//八进制
+HEXADECIMIAL  ((0x)[[:xdigit:]]*)//十六进制
+ID [[:alpha:]_][[:alpha:][:digit:]_]*//标识符
+EOL (\r\n|\n|\r)//换行
 WHITE [\t ]
-LINECOMMENT (\/\/[^\n]*)
-CHARACTER .
+LINECOMMENT (\/\/[^\n]*)//行注释
 
-commentbegin "/*"
+commentbegin "/*"  //块注释
 commentelement .|\n
 commentend "*/"
 %x BLOCKCOMMENT
@@ -64,6 +63,7 @@ commentend "*/"
 <BLOCKCOMMENT>{commentend} {BEGIN INITIAL;}
 
 {LINECOMMENT}
+
 {DECIMIAL} {
     #ifdef ONLY_FOR_LEX
         char* d = new char[strlen(yytext)+1];    
@@ -71,27 +71,28 @@ commentend "*/"
         string d1=string(d);
         DEBUG_FOR_LAB4("DECIMIAL\t" + d1);
         offset+=strlen(yytext);
-        delete d;
     #else
-        return d;
+        return DECIMIAL;
     #endif
 }
 {OCTAL} {
         #ifdef ONLY_FOR_LEX
             int len=strlen(yytext);
-            offset+=len;
             int n=strtol(yytext,NULL,8);
             string o=to_string(n);
             DEBUG_FOR_LAB4("OCTAL \t" + o);
+            offset+=len;
         #else
             return OCTAL;
         #endif
 }
 {HEXADECIMIAL} {
         #ifdef ONLY_FOR_LEX
+            int len=strlen(yytext);
             int n=strtol(yytext,NULL,16);
             string h=to_string(n);
             DEBUG_FOR_LAB4("HEXADECIMIAL\t" + h);
+            offset+=len;
         #else
             return HEXADECIMIAL;
         #endif

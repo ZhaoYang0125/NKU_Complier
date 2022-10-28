@@ -1,12 +1,13 @@
+//符号表头文件
 #include<iostream>
 #include<map>
 #include<string>
 
-class symEntry{
+class symEntry{//一条信息类
 public:
-    int value;
-    int lineno;
-    int offset;
+    int value;   //值
+    int lineno;  //行号
+    int offset;  //偏移量
     symEntry(int value, int lineno, int offset){
         this->value = value;
         this->lineno = lineno;
@@ -14,19 +15,19 @@ public:
     }
 };
 
-class symTable{
+class symTable{//符号表类
 private:
-    std::map<std::string, symEntry*> table;
-    symTable* prev;
-    int level;
+    std::map<std::string, symEntry*> table; //表
+    symTable* prev;                         //前一个表
+    int level;                              //作用域级
 
 public:
     symTable();
     symTable(symTable* prev);
-    bool installID(std::string name, symEntry* entry);
-    symEntry* lookUp(std::string name);
-    bool setEntryVal(std::string name, int value);
-    symTable* getPrev();
+    bool installID(std::string name, symEntry* entry);//插入一条
+    symEntry* lookUp(std::string name);        //查询一条
+    bool setEntryVal(std::string name, int value);  //设置一条的值
+    symTable* getPrev();     //返回前一个表
 };
 
 
