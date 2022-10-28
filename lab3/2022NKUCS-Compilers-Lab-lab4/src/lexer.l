@@ -35,15 +35,15 @@
     #endif
 %}
 
-DECIMIAL ([1-9][0-9]*|0)//十进制
-OCTAL [0]([1-7][0-7]*|0)//八进制
-HEXADECIMIAL  ((0x)[[:xdigit:]]*)//十六进制
-ID [[:alpha:]_][[:alpha:][:digit:]_]*//标识符
-EOL (\r\n|\n|\r)//换行
+DECIMIAL ([1-9][0-9]*|0)   
+OCTAL [0]([1-7][0-7]*|0)
+HEXADECIMIAL  ((0x)[[:xdigit:]]*)
+ID [[:alpha:]_][[:alpha:][:digit:]_]*
+EOL (\r\n|\n|\r)
 WHITE [\t ]
-LINECOMMENT (\/\/[^\n]*)//行注释
+LINECOMMENT (\/\/[^\n]*)
 
-commentbegin "/*"  //块注释
+commentbegin "/*"  
 commentelement .|\n
 commentend "*/"
 %x BLOCKCOMMENT
