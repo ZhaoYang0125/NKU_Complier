@@ -199,8 +199,7 @@ commentend "*/"
             symEntry* entry=new symEntry(0, yylineno, offset);
             if(symtable->installID(id1, entry)){
                 printf("true\t");
-                printf("%s\n",id);
-                sprintf(pointer_to_scope,"%p",entry);//                
+                printf("%s\n",id);                
             }
             else{
                 printf("false\n");
@@ -209,8 +208,8 @@ commentend "*/"
         }
         else{
             printf("exist\n");
-            sprintf(pointer_to_scope,"%p",symtable->lookUp(id1));//
         }
+        sprintf(pointer_to_scope,"%p",symtable);//
         DEBUG_FOR_LAB4("ID    \t"+id1);
         strcpy(pointer_to_scope,"");
         offset+=strlen(yytext);
@@ -384,6 +383,7 @@ commentend "*/"
         DEBUG_FOR_LAB4("LBRACE\t{");
         offset++;
         symtable = new symTable(symtable);
+        sprintf(pointer_to_scope,"%p",symtable);
         level++;
     #else
         return LBRACE;
@@ -394,6 +394,7 @@ commentend "*/"
         DEBUG_FOR_LAB4("RBRACE\t}");
         offset++;
         symtable = symtable->getPrev();
+        sprintf(pointer_to_scope,"%p",symtable);
         level--;
     #else
         return RBRACE;

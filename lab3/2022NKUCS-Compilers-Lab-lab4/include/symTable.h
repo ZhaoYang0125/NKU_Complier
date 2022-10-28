@@ -45,7 +45,7 @@ symEntry* symTable::lookUp(std::string name){
     symTable* p=this;
     while(p!=nullptr){
         if(p->table.find(name)!=p->table.end()){
-            return p->table.find(name)->second;
+            return p->table[name];
         }
         p=p->prev;
     }
