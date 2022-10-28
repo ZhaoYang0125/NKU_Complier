@@ -383,8 +383,9 @@ commentend "*/"
         DEBUG_FOR_LAB4("LBRACE\t{");
         offset++;
         symtable = new symTable(symtable);
-        sprintf(pointer_to_scope,"%p",symtable);
+        //sprintf(pointer_to_scope,"%p",symtable);
         level++;
+    
     #else
         return LBRACE;
     #endif
@@ -394,7 +395,7 @@ commentend "*/"
         DEBUG_FOR_LAB4("RBRACE\t}");
         offset++;
         symtable = symtable->getPrev();
-        sprintf(pointer_to_scope,"%p",symtable);
+        //sprintf(pointer_to_scope,"%p",symtable);
         level--;
     #else
         return RBRACE;
