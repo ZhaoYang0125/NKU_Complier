@@ -161,6 +161,11 @@ commentend "*/"
         DEBUG_FOR_LAB4("SEMICOLON\t;");
     return SEMICOLON;
 }
+"," {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("COMMA\t,");
+    return COMMA;
+}
 "(" {
     if(dump_tokens)
         DEBUG_FOR_LAB4("LPAREN\t(");

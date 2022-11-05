@@ -11,6 +11,19 @@ Node::Node()
     seq = counter++;
 }
 
+void Node::setNext(Node* node){
+    Node* n=this;
+    while(n->getNext()){
+        n=n->getNext();
+    }
+    if(n==this){
+        this->next=node;
+    }
+    else{
+        n->setNext(node);
+    }
+}
+
 void Ast::output()
 {
     fprintf(yyout, "program\n");

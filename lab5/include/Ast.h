@@ -10,9 +10,12 @@ class Node
 private:
     static int counter;
     int seq;
+    Node* next;
 public:
     Node();
     int getSeq() const {return seq;};
+    void setNext(Node * node);
+    Node* getNext(){return this->next;};
     virtual void output(int level) = 0;
 };
 

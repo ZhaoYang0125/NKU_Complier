@@ -20,13 +20,14 @@
     ExprNode* exprtype;
     Type* type;
 }
+Type* type;
 
 %start Program
 %token <strtype> ID 
 %token <itype> INTEGER
 %token IF ELSE WHILE
 %token INT VOID
-%token LPAREN RPAREN LBRACE RBRACE SEMICOLON
+%token LPAREN RPAREN LBRACE RBRACE SEMICOLON COMMA
 %token ADD SUB MUL DIV MOD OR AND NOT LESS GREATER LESSEQUAL GREATEREQUAL EQUAL NOTEQUAL ASSIGN
 %token RETURN
 %token CONST
@@ -251,6 +252,7 @@ LOrExp
 Type
     : INT {
         $$ = TypeSystem::intType;
+        type=
     }
     | VOID {
         $$ = TypeSystem::voidType;
@@ -260,7 +262,7 @@ DeclStmt
     : VarDeclStmt { $$ = $1; }
     | ConstDeclStmt { $$ = $1; }
     ;
-VarDeclStmt
+VarDeclStmt//变量声明
     :
     Type ID SEMICOLON {
         SymbolEntry *se;
@@ -270,12 +272,31 @@ VarDeclStmt
         delete []$2;
     }
     ;
-ConstDeclStmt
+ConstDeclStmt//常量声明
     :
-    CONST Type ID SEMICOLON{
+    CONST Type ConstDefList SEMICOLON{
         SymbolEntry *se;
         se = new IdentifierSymbolEntry($2, $3, identifiers->getLevel());
         se->setConst();
+        identifiers->install($3, se);
+        $$ = new DeclStmt(new Id(se));
+        delete []$2;
+    }
+ConstDefList//常量列表
+    :
+    ConstDef{$$ = $1;}
+    |
+    ConstDef COMMA ConstDefList{//**************************************88
+        $$=$1;
+        $1=setNext($3);
+    }
+ConstDef//常数定义
+    :
+    ID ASSIGN ConstInitVal{
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry($2, $3, identifiers->getLevel());
+        se->setConst();
+        if(identifiers-)
         identifiers->install($3, se);
         $$ = new DeclStmt(new Id(se));
         delete []$2;
