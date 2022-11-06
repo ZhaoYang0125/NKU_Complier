@@ -3,6 +3,7 @@
     #include <assert.h>
     #include "parser.h"
     extern Ast ast;
+    Type* type;
     int yylex();
     int yyerror( char const * );
 }
@@ -20,7 +21,7 @@
     ExprNode* exprtype;
     Type* type;
 }
-Type* type;
+
 
 %start Program
 %token <strtype> ID 
@@ -33,7 +34,9 @@ Type* type;
 %token CONST
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt ConstDeclStmt FuncDef
-%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
+%nterm <stmttype> ConstDefList ConstDef 
+%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp ConstExp LVal RelExp LAndExp
+%nterm <exprtype> ConstInitVal
 %nterm <type> Type
 
 %precedence THEN
@@ -252,7 +255,7 @@ LOrExp
 Type
     : INT {
         $$ = TypeSystem::intType;
-        type=
+        type=TypeSystem::intType;
     }
     | VOID {
         $$ = TypeSystem::voidType;
@@ -274,43 +277,48 @@ VarDeclStmt//变量声明
     ;
 ConstDeclStmt//常量声明
     :
-    CONST Type ConstDefList SEMICOLON{
-        SymbolEntry *se;
-        se = new IdentifierSymbolEntry($2, $3, identifiers->getLevel());
-        se->setConst();
-        identifiers->install($3, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$2;
-    }
+    CONST Type ConstDefList SEMICOLON{ $$= $3; }
+    ;
 ConstDefList//常量列表
     :
-    ConstDef{$$ = $1;}
-    |
-    ConstDef COMMA ConstDefList{//**************************************88
+    ConstDefList COMMA ConstDef{//**************************************88
         $$=$1;
-        $1=setNext($3);
+        $1->setNext($3);
     }
+    |
+    ConstDef{$$ = $1;}
+    ;
 ConstDef//常数定义
     :
     ID ASSIGN ConstInitVal{
         SymbolEntry *se;
-        se = new IdentifierSymbolEntry($2, $3, identifiers->getLevel());
-        se->setConst();
-        if(identifiers-)
-        identifiers->install($3, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$2;
+        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
+        ((IdentifierSymbolEntry*)se)->setConst();
+        if(identifiers->lookup($1)){
+            fprintf(stderr, "identifier \"%s\" is already declared.\n", (char*)$1);
+        }
+        identifiers->install($1, se);
+        ((IdentifierSymbolEntry*)se)->setValue(((Constant*)$3)->getValue());
+        $$ = new ConstDeclStmt(new constId(se,((IdentifierSymbolEntry*)se)->getValue()));
+        delete []$1;
     }
-ConstDeclInitStmt
+    ;
+ConstInitVal
     :
-    CONST Type ID ASSIGN Exp{
-        SymbolEntry *se;
-        se = new IdentifierSymbolEntry($2, $3, identifiers->getLevel());
-        se->setConst();
-        identifiers->install($3, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$2;
+    ConstExp{
+        $$=$1; 
+        //ConstantSymbolEntry(type,((Constant*)$1)->getValue());
+        //delete []$1;
     }
+    ;
+ConstExp
+    :
+    AddExp{ $$=$1;}
+    // INTEGER{
+    //     SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, $1);
+    //     $$ = new Constant(se);
+    // }
+    ;
 FuncDef
     :
     Type ID {

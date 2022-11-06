@@ -187,8 +187,6 @@ commentend "*/"
     return RBRACE;
 }
 
-
-
 {DECIMIAL} {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);

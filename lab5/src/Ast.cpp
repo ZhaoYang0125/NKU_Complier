@@ -100,6 +100,10 @@ void BinaryExpr::output(int level)
     expr2->output(level + 4);
 }
 
+int Constant::getValue(){
+    return ((ConstantSymbolEntry*)symbolEntry)->getValue();
+}
+
 void Constant::output(int level)
 {
     std::string type, value;
@@ -120,6 +124,17 @@ void Id::output(int level)
             name.c_str(), scope, type.c_str());
 }
 
+void constId::output(int level)
+{
+    std::string name, type;
+    int scope;
+    name = symbolEntry->toStr();
+    type = symbolEntry->getType()->toStr();
+    scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tvalue: %d\n", level, ' ',
+            name.c_str(), scope, type.c_str(),value);
+}
+
 void CompoundStmt::output(int level)
 {
     fprintf(yyout, "%*cCompoundStmt\n", level, ' ');
@@ -136,6 +151,12 @@ void SeqNode::output(int level)
 void DeclStmt::output(int level)
 {
     fprintf(yyout, "%*cDeclStmt\n", level, ' ');
+    id->output(level + 4);
+}
+
+void ConstDeclStmt::output(int level)
+{
+    fprintf(yyout, "%*cConstDeclStmt\n", level, ' ');
     id->output(level + 4);
 }
 

@@ -10,7 +10,6 @@ class SymbolEntry
 {
 private:
     int kind;
-    bool constant;
 protected:
     enum {CONSTANT, VARIABLE, TEMPORARY};
     Type *type;
@@ -77,6 +76,8 @@ private:
     enum {GLOBAL, PARAM, LOCAL};
     std::string name;
     int scope;
+    bool isconst;
+    int value;
     // You can add any field you need here.
 
 public:
@@ -84,6 +85,9 @@ public:
     virtual ~IdentifierSymbolEntry() {};
     std::string toStr();
     int getScope() const {return scope;};
+    void setConst() {this->isconst=true;};
+    int getValue() const{return value;};
+    void setValue(int v){this->value=v;};
     // You can add any function you need here.
 };
 

@@ -53,6 +53,7 @@ class Constant : public ExprNode
 {
 public:
     Constant(SymbolEntry *se) : ExprNode(se){};
+    int getValue();
     void output(int level);
 };
 
@@ -60,6 +61,15 @@ class Id : public ExprNode
 {
 public:
     Id(SymbolEntry *se) : ExprNode(se){};
+    void output(int level);
+};
+
+class constId : public ExprNode
+{
+private:
+    int value;
+public:
+    constId(SymbolEntry *se,int value) : ExprNode(se),value(value){};
     void output(int level);
 };
 
@@ -89,7 +99,17 @@ class DeclStmt : public StmtNode
 private:
     Id *id;
 public:
+    DeclStmt(){};
     DeclStmt(Id *id) : id(id){};
+    void output(int level);
+};
+
+class ConstDeclStmt : public DeclStmt
+{
+private:
+    constId *id;
+public:
+    ConstDeclStmt(constId *id) {this->id=id;};
     void output(int level);
 };
 
