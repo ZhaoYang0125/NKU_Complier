@@ -49,6 +49,15 @@ public:
     void output(int level);
 };
 
+class CallExpr : public ExprNode {
+   private:
+    ExprNode* param;
+
+   public:
+    CallExpr(SymbolEntry* se, ExprNode* param=NULL);
+    void output(int level);
+};
+
 class Constant : public ExprNode
 {
 public:
@@ -94,6 +103,15 @@ public:
     void output(int level);
 };
 
+class ExprStmt : public StmtNode {
+   private:
+    ExprNode* expr;
+
+   public:
+    ExprStmt(ExprNode* expr) : expr(expr){};
+    void output(int level);
+};
+
 class DeclStmt : public StmtNode
 {
 private:
@@ -110,6 +128,12 @@ private:
     constId *id;
 public:
     ConstDeclStmt(constId *id) {this->id=id;};
+    void output(int level);
+};
+
+class BlankStmt : public StmtNode {
+   public:
+    BlankStmt(){};
     void output(int level);
 };
 

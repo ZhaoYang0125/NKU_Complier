@@ -33,10 +33,10 @@
 %token RETURN
 %token CONST
 
-%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt ConstDeclStmt FuncDef
+%nterm <stmttype> Stmts Stmt AssignStmt ExprStmt BlankStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt ConstDeclStmt FuncDef
 %nterm <stmttype> ConstDefList ConstDef 
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp ConstExp LVal RelExp LAndExp
-%nterm <exprtype> ConstInitVal
+%nterm <exprtype> ConstInitVal FuncRParams
 %nterm <type> Type
 
 %precedence THEN
@@ -55,6 +55,8 @@ Stmts
     ;
 Stmt
     : AssignStmt {$$=$1;}
+    | ExprStmt { $$ = $1; }
+    | BlankStmt { $$ = $1; }
     | BlockStmt {$$=$1;}
     | IfStmt {$$=$1;}
     | WhileStmt {$$=$1;}
@@ -80,6 +82,16 @@ AssignStmt
     :
     LVal ASSIGN Exp SEMICOLON {
         $$ = new AssignStmt($1, $3);
+    }
+    ;
+ExprStmt
+    : Exp SEMICOLON {
+        $$ = new ExprStmt($1);
+    }
+    ;
+BlankStmt
+    : SEMICOLON {
+        $$ = new BlankStmt();
     }
     ;
 BlockStmt
@@ -139,6 +151,20 @@ UnaryExp
     :
     PrimaryExp {
         $$ = $1;
+    }
+    | ID LPAREN FuncRParams RPAREN {//函数调用
+        SymbolEntry* se;
+        se = identifiers->lookup($1);
+        if (se == nullptr)
+            fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+        $$ = new CallExpr(se, $3);
+    }
+    | ID LPAREN RPAREN {
+        SymbolEntry* se;
+        se = identifiers->lookup($1);
+        if (se == nullptr)
+            fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+        $$ = new CallExpr(se);
     }
     |
     ADD UnaryExp {
@@ -252,6 +278,13 @@ LOrExp
         $$ = new BinaryExpr(se, BinaryExpr::OR, $1, $3);
     }
     ;
+FuncRParams 
+    : Exp { $$ = $1; }
+    | FuncRParams COMMA Exp {
+        $$ = $1;
+        $$->setNext($3);
+    }
+    ;
 Type
     : INT {
         $$ = TypeSystem::intType;
@@ -281,7 +314,7 @@ ConstDeclStmt//常量声明
     ;
 ConstDefList//常量列表
     :
-    ConstDefList COMMA ConstDef{//**************************************88
+    ConstDefList COMMA ConstDef {//**************************************88
         $$=$1;
         $1->setNext($3);
     }
@@ -314,10 +347,6 @@ ConstInitVal
 ConstExp
     :
     AddExp{ $$=$1;}
-    // INTEGER{
-    //     SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, $1);
-    //     $$ = new Constant(se);
-    // }
     ;
 FuncDef
     :

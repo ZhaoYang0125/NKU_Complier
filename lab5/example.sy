@@ -1,1 +1,6 @@
-const int n=0;
+//test const gloal var define
+const int a = 10, a = 5;
+
+int main(){
+    return b;
+}

@@ -6,6 +6,20 @@ SymbolEntry::SymbolEntry(Type *type, int kind)
 {
     this->type = type;
     this->kind = kind;
+    this->next=nullptr;
+}
+
+bool SymbolEntry::setNext(SymbolEntry* se){
+    SymbolEntry* s = this;
+    while (s->getNext()) {
+        s = s->getNext();
+    }
+    if (s == this) {
+        this->next = se;
+    } else {
+        s->setNext(se);
+    }
+    return true;
 }
 
 ConstantSymbolEntry::ConstantSymbolEntry(Type *type, int value) : SymbolEntry(type, SymbolEntry::CONSTANT)

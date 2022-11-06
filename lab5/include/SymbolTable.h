@@ -13,6 +13,7 @@ private:
 protected:
     enum {CONSTANT, VARIABLE, TEMPORARY};
     Type *type;
+    SymbolEntry* next;
 
 public:
     SymbolEntry(Type *type, int kind);
@@ -21,6 +22,9 @@ public:
     bool isTemporary() const {return kind == TEMPORARY;};
     bool isVariable() const {return kind == VARIABLE;};
     Type* getType() {return type;};
+    SymbolEntry* getNext() const { return next; };
+    bool setNext(SymbolEntry* se);
+
     virtual std::string toStr() = 0;
     // You can add any function you need here.
     void setConst();
