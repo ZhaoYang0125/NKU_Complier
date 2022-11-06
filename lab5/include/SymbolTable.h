@@ -22,12 +22,10 @@ public:
     bool isTemporary() const {return kind == TEMPORARY;};
     bool isVariable() const {return kind == VARIABLE;};
     Type* getType() {return type;};
-    SymbolEntry* getNext() const { return next; };
-    bool setNext(SymbolEntry* se);
-
     virtual std::string toStr() = 0;
     // You can add any function you need here.
-    void setConst();
+    SymbolEntry* getNext() const { return next; };
+    bool setNext(SymbolEntry* se);
 };
 
 
@@ -80,19 +78,20 @@ private:
     enum {GLOBAL, PARAM, LOCAL};
     std::string name;
     int scope;
-    bool isconst;
-    int value;
     // You can add any field you need here.
+    bool constant;
+    int value;
 
 public:
     IdentifierSymbolEntry(Type *type, std::string name, int scope);
     virtual ~IdentifierSymbolEntry() {};
     std::string toStr();
     int getScope() const {return scope;};
-    void setConst() {this->isconst=true;};
-    int getValue() const{return value;};
-    void setValue(int v){this->value=v;};
     // You can add any function you need here.
+    bool inited;
+    void setConst();
+    int getValue();
+    bool setValue(int value);
 };
 
 

@@ -1,6 +1,8 @@
-//test const gloal var define
-const int a = 10, a = 5;
-
-int main(){
-    return b;
+int main()
+{
+    int i=0;
+    int j=0;
+    putint(i);
+    getint();
+	return 0;
 }

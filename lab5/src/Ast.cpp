@@ -11,18 +11,17 @@ Node::Node()
     seq = counter++;
 }
 
-void Node::setNext(Node* node){
-    Node* n=this;
-    while(n->getNext()){
-        n=n->getNext();
+void Node::setNext(Node* next)
+{
+    Node* p = this;
+    while(p->getNext())
+    {
+        p = p->getNext();
     }
-    if(n==this){
-        this->next=node;
-    }
-    else{
-        n->setNext(node);
-    }
-    fprintf(yyout, "我执行了\n");
+    if(p==this)
+        p->next=next;
+    else
+        p->setNext(next);
 }
 
 void Ast::output()
@@ -101,10 +100,6 @@ void BinaryExpr::output(int level)
     expr2->output(level + 4);
 }
 
-int Constant::getValue(){
-    return ((ConstantSymbolEntry*)symbolEntry)->getValue();
-}
-
 void Constant::output(int level)
 {
     std::string type, value;
@@ -113,7 +108,37 @@ void Constant::output(int level)
     fprintf(yyout, "%*cIntegerLiteral\tvalue: %s\ttype: %s\n", level, ' ',
             value.c_str(), type.c_str());
 }
-CallExpr::CallExpr(SymbolEntry* se, ExprNode* param): ExprNode(se), param(param){//有参函数调用
+
+void Id::output(int level)
+{
+    std::string name, type;
+    int scope;
+    bool inited;
+    int value;
+    inited = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->inited; 
+    if(inited)
+    {
+        value = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getValue();
+    }
+    name = symbolEntry->toStr();
+    type = symbolEntry->getType()->toStr();
+    scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
+    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\n", level, ' ',
+            name.c_str(), scope, type.c_str());
+    
+    if(inited)
+    {
+        fprintf(yyout, "value: %d\n", value);
+    }
+    /*
+    else
+    {
+        fprintf(yyout, "value: uninitialized\n");
+    }
+    */
+}
+
+CallExpr::CallExpr(SymbolEntry* se, ExprNode* param/*=NULL*/): ExprNode(se), param(param){//有参函数调用
     SymbolEntry* s = se;
     int paramnum = 0;
     ExprNode* temp = param;
@@ -130,6 +155,7 @@ CallExpr::CallExpr(SymbolEntry* se, ExprNode* param): ExprNode(se), param(param)
     if(paramnum==0){
         paramnum++;
     }
+//    printf("%d, %d\n", paramnum, int(params.size()));
     if ((long unsigned int)paramnum == params.size()) {
         //this->symbolEntry = s;
     }
@@ -138,6 +164,16 @@ CallExpr::CallExpr(SymbolEntry* se, ExprNode* param): ExprNode(se), param(param)
     }
     params.clear();
 };
+
+void ExprStmt::output(int level) 
+{
+    fprintf(yyout, "%*cExprStmt\n", level, ' ');
+    expr->output(level + 4);
+}
+
+void BlankStmt::output(int level) {
+    fprintf(yyout, "%*cBlankStmt\n", level, ' ');
+}
 
 void CallExpr::output(int level) {
     std::string name, type;
@@ -155,27 +191,6 @@ void CallExpr::output(int level) {
         }
     }
 }
-void Id::output(int level)
-{
-    std::string name, type;
-    int scope;
-    name = symbolEntry->toStr();
-    type = symbolEntry->getType()->toStr();
-    scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\n", level, ' ',
-            name.c_str(), scope, type.c_str());
-}
-
-void constId::output(int level)
-{
-    std::string name, type;
-    int scope;
-    name = symbolEntry->toStr();
-    type = symbolEntry->getType()->toStr();
-    scope = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getScope();
-    fprintf(yyout, "%*cId\tname: %s\tscope: %d\ttype: %s\tvalue: %d\n", level, ' ',
-            name.c_str(), scope, type.c_str(),value);
-}
 
 void CompoundStmt::output(int level)
 {
@@ -190,25 +205,14 @@ void SeqNode::output(int level)
     stmt2->output(level + 4);
 }
 
-void ExprStmt::output(int level) {
-    fprintf(yyout, "%*cExprStmt\n", level, ' ');
-    expr->output(level + 4);
-}
-
-void BlankStmt::output(int level) {
-    fprintf(yyout, "%*cBlankStmt\n", level, ' ');
-}
-
 void DeclStmt::output(int level)
 {
     fprintf(yyout, "%*cDeclStmt\n", level, ' ');
     id->output(level + 4);
-}
-
-void ConstDeclStmt::output(int level)
-{
-    fprintf(yyout, "%*cConstDeclStmt\n", level, ' ');
-    id->output(level + 4);
+    
+    if (this->getNext()) {
+        this->getNext()->output(level);
+    }
 }
 
 void IfStmt::output(int level)

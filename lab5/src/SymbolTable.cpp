@@ -9,14 +9,19 @@ SymbolEntry::SymbolEntry(Type *type, int kind)
     this->next=nullptr;
 }
 
-bool SymbolEntry::setNext(SymbolEntry* se){
+bool SymbolEntry::setNext(SymbolEntry* se)
+{
     SymbolEntry* s = this;
-    while (s->getNext()) {
+    while (s->getNext()) 
+    {
         s = s->getNext();
     }
-    if (s == this) {
+    if (s == this)
+    {
         this->next = se;
-    } else {
+    }
+    else 
+    {
         s->setNext(se);
     }
     return true;
@@ -37,13 +42,32 @@ std::string ConstantSymbolEntry::toStr()
 IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int scope) : SymbolEntry(type, SymbolEntry::VARIABLE), name(name)
 {
     this->scope = scope;
-    this->isconst=false;
+    this->constant=false;
+    this->inited=false;
+}
+
+bool IdentifierSymbolEntry::setValue(int value)
+{
+    this->value=value;
+    return true;
+}
+
+int IdentifierSymbolEntry::getValue()
+{
+    return this->value;
 }
 
 std::string IdentifierSymbolEntry::toStr()
 {
     return name;
 }
+
+//
+void IdentifierSymbolEntry::setConst()
+{
+    this->constant=true;
+}
+
 
 TemporarySymbolEntry::TemporarySymbolEntry(Type *type, int label) : SymbolEntry(type, SymbolEntry::TEMPORARY)
 {

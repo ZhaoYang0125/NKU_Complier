@@ -14,8 +14,8 @@ private:
 public:
     Node();
     int getSeq() const {return seq;};
-    void setNext(Node * node);
-    Node* getNext(){return this->next;};
+    Node* getNext(){return next;};
+    void setNext(Node* next);
     virtual void output(int level) = 0;
 };
 
@@ -38,6 +38,15 @@ public:
     void output(int level);
 };
 
+class CallExpr : public ExprNode 
+{
+private:
+    ExprNode* param;
+public:
+    CallExpr(SymbolEntry* se, ExprNode* param=NULL);
+    void output(int level);
+};
+
 class BinaryExpr : public ExprNode
 {
 private:
@@ -49,20 +58,10 @@ public:
     void output(int level);
 };
 
-class CallExpr : public ExprNode {
-   private:
-    ExprNode* param;
-
-   public:
-    CallExpr(SymbolEntry* se, ExprNode* param=NULL);
-    void output(int level);
-};
-
 class Constant : public ExprNode
 {
 public:
     Constant(SymbolEntry *se) : ExprNode(se){};
-    int getValue();
     void output(int level);
 };
 
@@ -73,17 +72,23 @@ public:
     void output(int level);
 };
 
-class constId : public ExprNode
-{
-private:
-    int value;
-public:
-    constId(SymbolEntry *se,int value) : ExprNode(se),value(value){};
+class StmtNode : public Node
+{};
+
+class ExprStmt : public StmtNode {
+   private:
+    ExprNode* expr;
+
+   public:
+    ExprStmt(ExprNode* expr) : expr(expr){};
     void output(int level);
 };
 
-class StmtNode : public Node
-{};
+class BlankStmt : public StmtNode {
+   public:
+    BlankStmt(){};
+    void output(int level);
+};
 
 class CompoundStmt : public StmtNode
 {
@@ -103,37 +108,12 @@ public:
     void output(int level);
 };
 
-class ExprStmt : public StmtNode {
-   private:
-    ExprNode* expr;
-
-   public:
-    ExprStmt(ExprNode* expr) : expr(expr){};
-    void output(int level);
-};
-
 class DeclStmt : public StmtNode
 {
 private:
     Id *id;
 public:
-    DeclStmt(){};
     DeclStmt(Id *id) : id(id){};
-    void output(int level);
-};
-
-class ConstDeclStmt : public DeclStmt
-{
-private:
-    constId *id;
-public:
-    ConstDeclStmt(constId *id) {this->id=id;};
-    void output(int level);
-};
-
-class BlankStmt : public StmtNode {
-   public:
-    BlankStmt(){};
     void output(int level);
 };
 

@@ -3,9 +3,9 @@
     #include <assert.h>
     #include "parser.h"
     extern Ast ast;
-    Type* type;
     int yylex();
     int yyerror( char const * );
+    Type* declType;
 }
 
 %code requires {
@@ -22,7 +22,6 @@
     Type* type;
 }
 
-
 %start Program
 %token <strtype> ID 
 %token <itype> INTEGER
@@ -33,10 +32,10 @@
 %token RETURN
 %token CONST
 
-%nterm <stmttype> Stmts Stmt AssignStmt ExprStmt BlankStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt ConstDeclStmt FuncDef
-%nterm <stmttype> ConstDefList ConstDef 
-%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp ConstExp LVal RelExp LAndExp
-%nterm <exprtype> ConstInitVal FuncRParams
+%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDefList VarDef ConstDeclStmt ConstDefList ConstDef FuncDef
+%nterm <stmttype> ExprStmt BlankStmt
+%nterm <exprtype> FuncRParams
+%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
 %nterm <type> Type
 
 %precedence THEN
@@ -55,14 +54,14 @@ Stmts
     ;
 Stmt
     : AssignStmt {$$=$1;}
-    | ExprStmt { $$ = $1; }
-    | BlankStmt { $$ = $1; }
     | BlockStmt {$$=$1;}
     | IfStmt {$$=$1;}
     | WhileStmt {$$=$1;}
     | ReturnStmt {$$=$1;}
     | DeclStmt {$$=$1;}
     | FuncDef {$$=$1;}
+    | ExprStmt {$$=$1;}
+    | BlankStmt {$$=$1;}
     ;
 LVal
     : ID {
@@ -82,16 +81,6 @@ AssignStmt
     :
     LVal ASSIGN Exp SEMICOLON {
         $$ = new AssignStmt($1, $3);
-    }
-    ;
-ExprStmt
-    : Exp SEMICOLON {
-        $$ = new ExprStmt($1);
-    }
-    ;
-BlankStmt
-    : SEMICOLON {
-        $$ = new BlankStmt();
     }
     ;
 BlockStmt
@@ -147,19 +136,31 @@ PrimaryExp
         $$ = new Constant(se);
     }
     ;
+ExprStmt
+    : Exp SEMICOLON {
+        $$ = new ExprStmt($1);
+    }
+    ;
+BlankStmt
+    : SEMICOLON {
+        $$ = new BlankStmt();
+    }
+    ;
 UnaryExp
     :
     PrimaryExp {
         $$ = $1;
     }
-    | ID LPAREN FuncRParams RPAREN {//函数调用
+    | 
+    ID LPAREN FuncRParams RPAREN {//函数调用
         SymbolEntry* se;
         se = identifiers->lookup($1);
         if (se == nullptr)
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
         $$ = new CallExpr(se, $3);
     }
-    | ID LPAREN RPAREN {
+    |
+    ID LPAREN RPAREN {
         SymbolEntry* se;
         se = identifiers->lookup($1);
         if (se == nullptr)
@@ -278,75 +279,94 @@ LOrExp
         $$ = new BinaryExpr(se, BinaryExpr::OR, $1, $3);
     }
     ;
-FuncRParams 
-    : Exp { $$ = $1; }
-    | FuncRParams COMMA Exp {
-        $$ = $1;
-        $$->setNext($3);
-    }
-    ;
 Type
     : INT {
         $$ = TypeSystem::intType;
-        type=TypeSystem::intType;
+        declType = TypeSystem::intType;
     }
     | VOID {
         $$ = TypeSystem::voidType;
+        declType = TypeSystem::voidType;
+    }
+    ;
+FuncRParams 
+    : Exp { $$ = $1; }
+    | FuncRParams COMMA Exp {
+        $1->setNext($3);
+        $$ = $1;
     }
     ;
 DeclStmt
     : VarDeclStmt { $$ = $1; }
     | ConstDeclStmt { $$ = $1; }
     ;
-VarDeclStmt//变量声明
+VarDef
     :
-    Type ID SEMICOLON {
-        SymbolEntry *se;
-        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
-        identifiers->install($2, se);
-        $$ = new DeclStmt(new Id(se));
-        delete []$2;
-    }
-    ;
-ConstDeclStmt//常量声明
-    :
-    CONST Type ConstDefList SEMICOLON{ $$= $3; }
-    ;
-ConstDefList//常量列表
-    :
-    ConstDefList COMMA ConstDef {//**************************************88
-        $$=$1;
-        $1->setNext($3);
-    }
-    |
-    ConstDef{$$ = $1;}
-    ;
-ConstDef//常数定义
-    :
-    ID ASSIGN ConstInitVal{
-        SymbolEntry *se;
-        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
-        ((IdentifierSymbolEntry*)se)->setConst();
-        if(identifiers->lookup($1)){
-            fprintf(stderr, "identifier \"%s\" is already declared.\n", (char*)$1);
-        }
+    ID{
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         identifiers->install($1, se);
-        ((IdentifierSymbolEntry*)se)->setValue(((Constant*)$3)->getValue());
-        $$ = new ConstDeclStmt(new constId(se,((IdentifierSymbolEntry*)se)->getValue()));
+        $$ = new DeclStmt(new Id(se));
         delete []$1;
     }
-    ;
-ConstInitVal
+    |
+     ID ASSIGN Exp {
+        SymbolEntry *se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+//        ((IdentifierSymbolEntry*)se)->setValue($3->getValueI());
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se));
+        delete []$1;
+     }
+     ;
+VarDefList
     :
-    ConstExp{
-        $$=$1; 
-        //ConstantSymbolEntry(type,((Constant*)$1)->getValue());
-        //delete []$1;
+    VarDefList COMMA VarDef {
+        $1->setNext($3);
+        $$ = $1;
+    } 
+    |
+    VarDef { $$ = $1;}
+    ;
+VarDeclStmt
+    :
+    Type VarDefList SEMICOLON {
+        $$ = $2;
     }
     ;
-ConstExp
+ConstDef
     :
-    AddExp{ $$=$1;}
+    ID{
+        IdentifierSymbolEntry *se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+        se->setConst();
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se));
+    }
+    |
+     ID ASSIGN Exp {
+        IdentifierSymbolEntry *se;
+        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+        se->setConst();
+        identifiers->install($1, se);
+        $$ = new DeclStmt(new Id(se));
+     }
+     ;
+ConstDefList
+    :
+    ConstDef { $$ = $1;}
+    |
+    ConstDefList COMMA ConstDef {
+        $1->setNext($3);
+        $$ = $1;
+    } 
+    ;
+ConstDeclStmt
+    :
+    CONST Type ConstDefList SEMICOLON{
+        declType = $2;
+        $$ = $3;
+    }
     ;
 FuncDef
     :
