@@ -16,6 +16,7 @@ class Node
 private:
     static int counter;
     int seq;
+    Node* next;
 protected:
     std::vector<Instruction*> true_list;
     std::vector<Instruction*> false_list;
@@ -26,6 +27,8 @@ protected:
 public:
     Node();
     int getSeq() const {return seq;};
+    Node* getNext(){return next;};
+    void setNext(Node* next);
     static void setIRBuilder(IRBuilder*ib) {builder = ib;};
     virtual void output(int level) = 0;
     virtual void typeCheck() = 0;
