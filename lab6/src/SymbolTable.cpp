@@ -131,11 +131,6 @@ void SymbolTable::install(std::string name, SymbolEntry* entry)
     symbolTable[name] = entry;
 }
 
-void SymbolEntry::setConst()
-{
-    this->constant=true;
-}
-
 int SymbolTable::counter = 0;
 static SymbolTable t;
 SymbolTable *identifiers = &t;

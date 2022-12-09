@@ -194,7 +194,6 @@ void ReturnStmt::genCode()
 {
     // Todo
 }
-
 void AssignStmt::genCode()
 {
     BasicBlock *bb = builder->getInsertBB();
@@ -208,66 +207,120 @@ void AssignStmt::genCode()
     new StoreInstruction(addr, src, bb);
 }
 
-void Ast::typeCheck()
+// self define
+void ExprStmt::genCode() 
+{
+    // Todo
+}
+void CallExpr::genCode() 
+{
+    // Todo
+}
+void UnaryExpr::genCode() {
+    // Todo
+}
+void BlankStmt::genCode() {
+    // Todo
+}
+void WhileStmt::genCode() {
+    // Todo
+}
+bool ExprStmt::typeCheck(Type* retType) {
+    // Todo
+    return false;
+}
+bool WhileStmt::typeCheck(Type* retType) {
+    // Todo
+    return false;
+}
+bool CallExpr::typeCheck(Type* retType) {
+    // Todo
+    return false;
+}
+bool UnaryExpr::typeCheck(Type* retType) 
+{
+    // Todo
+    return false;
+}
+bool BlankStmt::typeCheck(Type* retType) 
+{
+    // Todo
+    return false;
+}
+
+bool Ast::typeCheck(Type* retType)
 {
     if(root != nullptr)
         root->typeCheck();
+    return false;
 }
 
-void FunctionDef::typeCheck()
+bool FunctionDef::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void BinaryExpr::typeCheck()
+bool BinaryExpr::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void Constant::typeCheck()
+bool Constant::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void Id::typeCheck()
+bool Id::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void IfStmt::typeCheck()
+bool IfStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void IfElseStmt::typeCheck()
+bool IfElseStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void CompoundStmt::typeCheck()
+bool CompoundStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void SeqNode::typeCheck()
+bool SeqNode::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void DeclStmt::typeCheck()
+bool DeclStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void ReturnStmt::typeCheck()
+bool ReturnStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
 
-void AssignStmt::typeCheck()
+bool AssignStmt::typeCheck(Type* retType)
 {
     // Todo
+    return false;
 }
+
 
 void UnaryExpr::output(int level)
 {

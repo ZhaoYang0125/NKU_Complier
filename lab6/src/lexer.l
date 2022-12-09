@@ -139,13 +139,13 @@ commentend "*/"
 }
 ">=" {
     if(dump_tokens)
-        DEBUG_FOR_LAB4("GEQUAL\t>=");
-    return GEQUAL;
+        DEBUG_FOR_LAB4("GREATEREQUAL\t>=");
+    return GREATEREQUAL;
 }
 "<=" {
     if(dump_tokens)
-        DEBUG_FOR_LAB4("LEQUAL\t<=");
-    return LEQUAL;
+        DEBUG_FOR_LAB4("LESSEQUAL\t<=");
+    return LESSEQUAL;
 }
 "==" {
     if(dump_tokens)
@@ -154,13 +154,8 @@ commentend "*/"
 }
 "!=" {
     if(dump_tokens)
-        DEBUG_FOR_LAB4("NEQUAL\t!=");
-    return NEQUAL;
-}
-"+" {
-    if(dump_tokens)
-        DEBUG_FOR_LAB4("ADD\t+");
-    return ADD;
+        DEBUG_FOR_LAB4("NOTEQUAL\t!=");
+    return NOTEQUAL;
 }
 ";" {
     if(dump_tokens)
