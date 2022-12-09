@@ -24,12 +24,6 @@ void Node::setNext(Node* next)
         p->setNext(next);
 }
 
-void Ast::output()
-{
-    fprintf(yyout, "program\n");
-    if(root != nullptr)
-        root->output(4);
-}
 
 void UnaryExpr::output(int level)
 {
@@ -98,6 +92,13 @@ void BinaryExpr::output(int level)
     fprintf(yyout, "%*cBinaryExpr\top: %s\n", level, ' ', op_str.c_str());
     expr1->output(level + 4);
     expr2->output(level + 4);
+}
+
+void Ast::output()
+{
+    fprintf(yyout, "program\n");
+    if(root != nullptr)
+        root->output(4);
 }
 
 void Constant::output(int level)
