@@ -124,12 +124,12 @@ void Id::genCode()
     Operand *addr = dynamic_cast<IdentifierSymbolEntry*>(symbolEntry)->getAddr();
     new LoadInstruction(dst, addr, bb);
 }
-
+/*if then end*/
 void IfStmt::genCode()
 {
     Function *func;
     BasicBlock *then_bb, *end_bb;
-
+    
     func = builder->getInsertBB()->getParent();
     then_bb = new BasicBlock(func);
     end_bb = new BasicBlock(func);
@@ -146,19 +146,49 @@ void IfStmt::genCode()
     builder->setInsertBB(end_bb);
 }
 
+/*if then else end*/
 void IfElseStmt::genCode()
 {
     // Todo
-}
+    Function *func;
+    BasicBlock *then_bb,*end_bb,*else_bb;
+    //bulider用于传递继承属性
+    func=builder->getInsertBB()->getParent();//找到当前要插入的基本块的父节点
+    then_bb = new BasicBlock(func);
+    else_bb=new BasicBlock(func);
+    end_bb = new BasicBlock(func);
 
+    cond->genCode();
+    backPatch(cond->trueList(),then_bb);
+    backPatch(cond->falseList(),else_bb);
+
+    //thenStmt
+    builder->setInsertBB(then_bb);
+    thenStmt->genCode();
+    then_bb = builder->getInsertBB();
+    new UncondBrInstruction(end_bb, then_bb);
+
+    builder->setInsertBB(else_bb);
+    elseStmt->genCode();
+    else_bb=builder->getInsertBB();
+    new UncondBrInstruction(end_bb,else_bb);
+
+    builder->setInsertBB(end_bb);
+}
+//函数体
 void CompoundStmt::genCode()
 {
     // Todo
+    if(stmt!=nullptr){
+        stmt->genCode();
+    }
 }
 
 void SeqNode::genCode()
 {
     // Todo
+    stmt1->genCode();
+    stmt2->genCode();
 }
 
 void DeclStmt::genCode()
@@ -193,6 +223,13 @@ void DeclStmt::genCode()
 void ReturnStmt::genCode()
 {
     // Todo
+    BasicBlock* ret_bb=builder->getInsertBB();
+    Operand* src=nullptr;
+    if(retValue){
+        retValue->genCode();
+        src=retValue->getOperand();
+    }
+    new RetInstruction(src,ret_bb);
 }
 void AssignStmt::genCode()
 {
@@ -225,100 +262,130 @@ void BlankStmt::genCode() {
 void WhileStmt::genCode() {
     // Todo
 }
-bool ExprStmt::typeCheck(Type* retType) {
+
+
+void ExprStmt::typeCheck(Type* t) {
     // Todo
-    return false;
+    
 }
-bool WhileStmt::typeCheck(Type* retType) {
+void WhileStmt::typeCheck(Type* t) {
     // Todo
-    return false;
+    
 }
-bool CallExpr::typeCheck(Type* retType) {
+void CallExpr::typeCheck(Type* t) {
     // Todo
-    return false;
+    
 }
-bool UnaryExpr::typeCheck(Type* retType) 
+void UnaryExpr::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
-bool BlankStmt::typeCheck(Type* retType) 
+void BlankStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool Ast::typeCheck(Type* retType)
+void Ast::typeCheck(Type* t)
 {
     if(root != nullptr)
-        root->typeCheck();
-    return false;
+        root->typeCheck(t);
 }
 
-bool FunctionDef::typeCheck(Type* retType)
+void FunctionDef::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool BinaryExpr::typeCheck(Type* retType)
+void BinaryExpr::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool Constant::typeCheck(Type* retType)
+void Constant::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool Id::typeCheck(Type* retType)
+void Id::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool IfStmt::typeCheck(Type* retType)
+void IfStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool IfElseStmt::typeCheck(Type* retType)
+void IfElseStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    if(thenStmt){
+        thenStmt->typeCheck(t);
+    }
+    if(elseStmt){
+        elseStmt->typeCheck(t);
+    }
 }
 
-bool CompoundStmt::typeCheck(Type* retType)
+void CompoundStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    if(stmt){
+        stmt->typeCheck(t);
+    }
 }
 
-bool SeqNode::typeCheck(Type* retType)
+void SeqNode::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    if(stmt1){
+        stmt1->typeCheck(t);
+    }
+    if(stmt2){
+        stmt2->typeCheck(t);
+    }
+    
 }
 
-bool DeclStmt::typeCheck(Type* retType)
+void DeclStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
-bool ReturnStmt::typeCheck(Type* retType)
+void ReturnStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    if(!t){
+        fprintf(stderr,"未设置函数返回值类型\n");
+        return;
+    }
+    if(retValue&&t->isVoid()){
+        fprintf(stderr,"错误的返回值类型\n");
+    }
+    else if(!retValue&&!t->isVoid()){
+        fprintf(stderr,"没有返回值，应返回%s型值\n",t->toStr().c_str());
+    }
+    else if(!t->isVoid()){
+        Type* type=retValue->getType();
+        if(t!=type){
+            fprintf(stderr,"数据类型不匹配：%s,%s\n",t->toStr().c_str(),type->toStr().c_str());
+        }
+    }
+
 }
 
-bool AssignStmt::typeCheck(Type* retType)
+void AssignStmt::typeCheck(Type* t)
 {
     // Todo
-    return false;
+    
 }
 
 
