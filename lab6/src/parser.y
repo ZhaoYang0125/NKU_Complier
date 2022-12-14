@@ -25,14 +25,14 @@
 %start Program
 %token <strtype> ID 
 %token <itype> INTEGER
-%token IF ELSE WHILE
+%token IF ELSE WHILE BREAK CONTINUE
 %token INT VOID
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON COMMA
 %token ADD SUB MUL DIV MOD OR AND NOT LESS GREATER LESSEQUAL GREATEREQUAL EQUAL NOTEQUAL ASSIGN
 %token RETURN
 %token CONST
 
-%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDefList VarDef ConstDeclStmt ConstDefList ConstDef FuncDef
+%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDefList VarDef ConstDeclStmt ConstDefList ConstDef FuncDef BreakStmt ContinueStmt
 %nterm <stmttype> ExprStmt BlankStmt
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
@@ -57,6 +57,8 @@ Stmt
     | BlockStmt {$$=$1;}
     | IfStmt {$$=$1;}
     | WhileStmt {$$=$1;}
+    | BreakStmt {$$=$1;}
+    | ContinueStmt {$$=$1;}
     | ReturnStmt {$$=$1;}
     | DeclStmt {$$=$1;}
     | FuncDef {$$=$1;}
@@ -144,6 +146,16 @@ ExprStmt
 BlankStmt
     : SEMICOLON {
         $$ = new BlankStmt();
+    }
+    ;
+BreakStmt
+    : BREAK SEMICOLON{
+        $$ = new BreakStmt();
+    }
+    ;
+ContinueStmt
+    : CONTINUE SEMICOLON{
+        $$ = new ContinueStmt();
     }
     ;
 UnaryExp

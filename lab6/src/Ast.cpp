@@ -262,7 +262,8 @@ void BlankStmt::genCode() {
 void WhileStmt::genCode() {
     // Todo
 }
-
+void BreakStmt::genCode(){}
+void ContinueStmt::genCode(){}
 
 void ExprStmt::typeCheck(Type* t) {
     // Todo
@@ -283,7 +284,16 @@ void UnaryExpr::typeCheck(Type* t)
 }
 void BlankStmt::typeCheck(Type* t)
 {
-    // Todo
+    // Todo  
+
+}
+
+void BreakStmt::typeCheck()
+{
+    
+}
+void ContinueStmt::typeCheck()
+{
     
 }
 
@@ -538,6 +548,16 @@ void ExprStmt::output(int level)
 
 void BlankStmt::output(int level) {
     fprintf(yyout, "%*cBlankStmt\n", level, ' ');
+}
+
+void BreakStmt::output(int level)
+{
+    fprintf(yyout, "%*cBreakStmt\n", level, ' ');
+}
+
+void ContinueStmt::output(int level)
+{
+    fprintf(yyout, "%*cContinueStmt\n", level, ' ');
 }
 
 void CallExpr::output(int level) {

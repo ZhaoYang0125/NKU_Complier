@@ -261,6 +261,42 @@ void AllocaInstruction::output() const
     fprintf(yyout, "  %s = alloca %s, align 4\n", dst.c_str(), type.c_str());
 }
 
+//函数调用
+FunctionCallInstruction::FunctionCallInstruction(Operand* dst,SymbolEntry* se,std::vector<Operand*> params,BasicBlock *insert_bb): Instruction(CALL, insert_bb){
+    operands.push_back(dst);//目的操作数
+    dst->setDef(this);
+
+    function=se;
+    for(auto param :params){
+        operands.push_back(param);//源操作数
+        param->addUse(this);
+    }
+}
+
+void FunctionCallInstruction::output() const
+{
+    Type* type=function->getType();
+    FunctionType* functype=(FunctionType*)type;//获取函数返回值类型
+    //函数有返回值且进行了赋值操作
+    if(operands[0]&&functype->getRetType()!=TypeSystem::voidType){
+        fprintf(yyout,"  %s =",operands[0]->toStr().c_str());
+    }
+    fprintf(yyout,"  call %s %s(",functype->getRetType()->toStr().c_str(),\
+            function->toStr().c_str());
+    //输出参数
+    for(int i=1;i<operands.size();i++){
+        if(i!=operands.size()-1){
+            fprintf(yyout,"%s %s, ",operands[i]->getType()->toStr().c_str(),
+                operands[i]->toStr().c_str());
+        }
+        else{
+            fprintf(yyout,"%s %s",operands[i]->getType()->toStr().c_str(),
+                operands[i]->toStr().c_str());
+        }
+    }
+    fprintf(yyout,")\n");
+}
+
 LoadInstruction::LoadInstruction(Operand *dst, Operand *src_addr, BasicBlock *insert_bb) : Instruction(LOAD, insert_bb)
 {
     operands.push_back(dst);
@@ -310,4 +346,31 @@ void StoreInstruction::output() const
     std::string src_type = operands[1]->getType()->toStr();
 
     fprintf(yyout, "  store %s %s, %s %s, align 4\n", src_type.c_str(), src.c_str(), dst_type.c_str(), dst.c_str());
+}
+
+//zextxortodo
+ZextInstruction::ZextInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb):Instruction(ZEXT,insert_bb){
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->setDef(this);
+    src->addUse(this);
+}
+
+void ZextInstruction::output() const{
+    std::string dst = operands[0]->toStr();
+    std::string src = operands[1]->toStr();
+    fprintf(yyout,"  %s = zext i1 %s to i32\n",dst.c_str(),src.c_str());
+}
+
+XorInstruction::XorInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb):Instruction(XOR,insert_bb){
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->setDef(this);
+    src->addUse(this);
+}
+
+void XorInstruction::output() const{
+    std::string dst = operands[0]->toStr();
+    std::string src = operands[1]->toStr();
+    fprintf(yyout,"  %s = xor i1 %s, true\n",dst.c_str(),src.c_str());
 }

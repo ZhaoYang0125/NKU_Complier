@@ -28,7 +28,8 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA};
+    //zextxortodo
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA,CALL,ZEXT,XOR};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -48,6 +49,31 @@ public:
 private:
     SymbolEntry *se;
 };
+//函数调用
+class FunctionCallInstruction:public Instruction
+{
+public:
+    FunctionCallInstruction(Operand* dst,SymbolEntry* se,std::vector<Operand*> params,BasicBlock *insert_bb = nullptr);
+    void output() const;
+    SymbolEntry* function;//函数在符号表中的位置
+};
+
+ //zextxortodo
+ //零扩展转换
+ class ZextInstruction:public Instruction
+ {
+ public:
+    ZextInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
+    void output() const;
+ };
+
+//异或
+class XorInstruction:public Instruction
+ {
+ public:
+    XorInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
+    void output() const;
+ };
 
 class LoadInstruction : public Instruction
 {

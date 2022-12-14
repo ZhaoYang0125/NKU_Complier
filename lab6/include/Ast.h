@@ -204,6 +204,23 @@ public:
     void genCode();
 };
 
+class BreakStmt : public StmtNode
+{
+public:
+    BreakStmt() {};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class ContinueStmt : public StmtNode
+{
+public:
+    ContinueStmt() {};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
 
 class ReturnStmt : public StmtNode
 {
@@ -233,12 +250,16 @@ class FunctionDef : public StmtNode
 private:
     SymbolEntry *se;
     StmtNode *stmt;
+    ParaList* para;//形参
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, StmtNode *stmt,ParaList *para) : se(se), stmt(stmt),para(para){};
     void output(int level);
     void typeCheck(Type* t);
     void genCode();
 };
+//新建一个list类
+class ListNode : public Node
+{};
 
 class Ast
 {
