@@ -171,6 +171,7 @@ public:
     void output(int level);
     void typeCheck();
     void genCode();
+    ExprNode* getLval(){return lval;}
 };
 
 class ListNode : public Node//序列型变量类

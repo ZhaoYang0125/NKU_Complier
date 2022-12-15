@@ -190,6 +190,7 @@ UnaryExp
     }
     |
     SUB UnaryExp {
+        //std::cout<<"sub"<<std::endl;
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::SUB, $2);
     }

@@ -371,6 +371,11 @@ void CallExpr::genCode()
         temp = ((ExprNode*)temp->getNext());
     }
     BasicBlock* bb = builder->getInsertBB();
+
+    Type *type2 = new IntType(32);  // temp register for function retValue
+    SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
+    dst = new Operand(addr_se2);
+    
     new CallInstruction(dst, symbolEntry, operands, bb);
 }
 void UnaryExpr::genCode()
@@ -440,7 +445,7 @@ void WhileStmt::genCode()
 
     UncondBrInstruction *temp = new UncondBrInstruction(cond_bb, builder -> getInsertBB());
     temp -> output();
-    //设置前后
+    //设置前驱后继
     cond_bb -> addPred(builder -> getInsertBB());
     builder -> getInsertBB() -> addSucc(cond_bb);
     loop_bb -> addPred(cond_bb);
@@ -519,7 +524,6 @@ void FunctionDef::typeCheck()
             fprintf(stderr, "non-void function does not return a value.\n");
             exit(EXIT_FAILURE);
         }
-        // 不嵌套函数定义就返回了
         return ;
     }
     stmt->typeCheck();
@@ -641,15 +645,6 @@ void ReturnStmt::typeCheck()
 void AssignStmt::typeCheck()
 {
     // Todo
-    Type* type1 = this->lval->getSymPtr()->getType();
-    Type* type2 = this->expr->getSymPtr()->getType();
-
-    if(type1 != type2){
-        fprintf(stderr,
-            "assign type error: \'%s\' and \'%s\'\n",
-            type1->toStr().c_str(), type2->toStr().c_str());
-        exit(EXIT_FAILURE);
-    }
 }
 
 void UnaryExpr::output(int level)

@@ -163,7 +163,8 @@ UncondBrInstruction::UncondBrInstruction(BasicBlock *to, BasicBlock *insert_bb) 
 
 void UncondBrInstruction::output() const
 {
-    fprintf(yyout, "  br label %%B%d\n", branch->getNo());
+    if(!branch->empty())
+        fprintf(yyout, "  br label %%B%d\n", branch->getNo());
 }
 
 void UncondBrInstruction::setBranch(BasicBlock *bb)
@@ -356,10 +357,10 @@ CallInstruction::CallInstruction(Operand* dst, SymbolEntry* func,
 
 void CallInstruction::output() const
 {
-    fprintf(yyout, "  ");
-    if (operands[0])
-        fprintf(yyout, "%s = ", operands[0]->toStr().c_str());
     FunctionType* type = (FunctionType*)(func->getType());
+    fprintf(yyout, "  ");
+    if (type->getRetType()!=TypeSystem::voidType)//返回值不为空
+        fprintf(yyout, "%s = ", operands[0]->toStr().c_str());
     fprintf(yyout, "call %s %s(", type->getRetType()->toStr().c_str(),
             func->toStr().c_str());
     for (long unsigned int i = 1; i < operands.size(); i++) 

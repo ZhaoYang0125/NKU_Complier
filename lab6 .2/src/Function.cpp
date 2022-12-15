@@ -35,7 +35,7 @@ void Function::output() const
     
     /*
     //有参函数，先传参数
-    for(int i=0;i<params.size();i++){
+    for(unsigned long int i=0;i<params.size();i++){
         if(i==params.size()-1){//最后一个参数
             fprintf(yyout, "i32 %s",(params[i])->toStr().c_str());
         }
