@@ -187,6 +187,10 @@ void Id::genCode()
     new LoadInstruction(dst, addr, bb);
 }
 
+void IdList::genCode(){
+
+}
+
 void IfStmt::genCode()
 {
     Function *func;
@@ -268,31 +272,34 @@ void SeqNode::genCode()
 }
 
 void DeclStmt::genCode()
-{
-    IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(id->getSymPtr());
-    if (se->isGlobal())
-    {
-        Operand *addr;
-        SymbolEntry *addr_se;
-        addr_se = new IdentifierSymbolEntry(*se);
-        addr_se->setType(new PointerType(se->getType()));
-        addr = new Operand(addr_se);
-        se->setAddr(addr);
-    }
-    else if (se->isLocal())
-    {
-        Function *func = builder->getInsertBB()->getParent();
-        BasicBlock *entry = func->getEntry();
-        Instruction *alloca;
-        Operand *addr;
-        SymbolEntry *addr_se;
-        Type *type;
-        type = new PointerType(se->getType());
-        addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());
-        addr = new Operand(addr_se);
-        alloca = new AllocaInstruction(addr, se); // allocate space for local id in function stack.
-        entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
-        se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+{//类型不兼容，必须用unsigned long
+    for(unsigned long int j=0;j<ids->idlist.size();j++){
+    //std::cout<<"declgencode"<<std::endl;
+        IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
+        if (se->isGlobal())
+        {
+            Operand *addr;
+            SymbolEntry *addr_se;
+            addr_se = new IdentifierSymbolEntry(*se);
+            addr_se->setType(new PointerType(se->getType()));
+            addr = new Operand(addr_se);
+            se->setAddr(addr);
+        }
+        else if (se->isLocal())
+        {
+            Function *func = builder->getInsertBB()->getParent();
+            BasicBlock *entry = func->getEntry();
+            Instruction *alloca;
+            Operand *addr;
+            SymbolEntry *addr_se;
+            Type *type;
+            type = new PointerType(se->getType());
+            addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());
+            addr = new Operand(addr_se);
+            alloca = new AllocaInstruction(addr, se); // allocate space for local id in function stack.
+            entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
+            se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+        }
     }
 }
 
@@ -521,6 +528,8 @@ void Id::typeCheck()
     // Todo
     // nothing can do
 }
+
+void IdList::typeCheck(){}
 
 void IfStmt::typeCheck()
 {
@@ -809,10 +818,20 @@ void SeqNode::output(int level)
     stmt2->output(level + 4);
 }
 
+void IdList::output(int level){
+    fprintf(yyout, "%*cIdList\n", level, ' ');
+    for(unsigned long int i = 0; i < idlist.size(); i++){
+        idlist[i] -> output(level + 4);
+    }
+    for(unsigned long int j = 0; j < assignlist.size(); j++){
+        assignlist[j] -> output(level + 4);
+    }
+}
+
 void DeclStmt::output(int level)
 {
     fprintf(yyout, "%*cDeclStmt\n", level, ' ');
-    id->output(level + 4);
+    ids->output(level + 4);
 
     if (this->getNext())
     {

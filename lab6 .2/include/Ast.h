@@ -160,13 +160,41 @@ public:
     void genCode();
 };
 
+class AssignStmt : public StmtNode
+{
+private:
+    ExprNode *lval;
+    ExprNode *expr;
+public:
+    AssignStmt(ExprNode *lval, ExprNode *expr) : lval(lval), expr(expr) {};
+
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class ListNode : public Node//序列型变量类
+{};
+
+//标识符列表
+class IdList:public ListNode
+{
+//private:
+public:
+    std::vector<Id*> idlist;//标识符串
+    std::vector<AssignStmt*> assignlist;//声明时直接赋值
+    IdList(std::vector<Id*>idlist,std::vector<AssignStmt*>ass):idlist(idlist),assignlist(ass){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
 class DeclStmt : public StmtNode
 {
 private:
-    Id *id;
+    IdList *ids;
 public:
-    DeclStmt(Id *id) : id(id){};
-
+    DeclStmt(IdList *ids) : ids(ids){};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -225,14 +253,19 @@ public:
     void genCode();
 };
 
-class AssignStmt : public StmtNode
+class BreakStmt : public StmtNode
 {
-private:
-    ExprNode *lval;
-    ExprNode *expr;
 public:
-    AssignStmt(ExprNode *lval, ExprNode *expr) : lval(lval), expr(expr) {};
+    BreakStmt() {};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
 
+class ContinueStmt : public StmtNode
+{
+public:
+    ContinueStmt() {};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -267,22 +300,5 @@ public:
     void genCode(Unit *unit);
 };
 
-class BreakStmt : public StmtNode
-{
-public:
-    BreakStmt() {};
-    void output(int level);
-    void typeCheck();
-    void genCode();
-};
-
-class ContinueStmt : public StmtNode
-{
-public:
-    ContinueStmt() {};
-    void output(int level);
-    void typeCheck();
-    void genCode();
-};
 
 #endif

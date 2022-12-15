@@ -20,6 +20,7 @@
     StmtNode* stmttype;
     ExprNode* exprtype;
     Type* type;
+    ListNode* listtype;
 }
 
 %start Program
@@ -33,8 +34,8 @@
 %token RETURN
 %token CONST
 
-%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDefList VarDef ConstDeclStmt ConstDefList ConstDef FuncDef
-%nterm <stmttype> ExprStmt BlankStmt
+%nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDef ConstDeclStmt ConstDef FuncDef
+%nterm <stmttype> ExprStmt BlankStmt VarDefList ConstDefList
 %nterm <stmttype> BreakStmt ContinueStmt
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
@@ -319,27 +320,44 @@ DeclStmt
 VarDef
     :
     ID{
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry* se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         identifiers->install($1, se);
-        $$ = new DeclStmt(new Id(se));
+        //$$ = new DeclStmt(new Id(se));
+        tem->idlist.push_back(new Id(se));
+        $$=(StmtNode*)tem;
+        //$$=new Id(se);
+        //std::cout<<"id"<<std::endl;
         delete []$1;
     }
     |
      ID ASSIGN Exp {
+         std::vector<Id*> idlist;
+         std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
-//        ((IdentifierSymbolEntry*)se)->setValue($3->getValueI());
         identifiers->install($1, se);
-        $$ = new DeclStmt(new Id(se));
+        //$$ = new DeclStmt(new Id(se));
+        tem->idlist.push_back(new Id(se));
+        tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
+        $$=(StmtNode*)tem;
+        //$$ = new Id(se);
         delete []$1;
      }
      ;
 VarDefList
     :
     VarDefList COMMA VarDef {
+        IdList *ids=(IdList*)$1;
+        IdList *id=(IdList*)$3;
+        ids->idlist.insert(ids->idlist.end(),id->idlist.begin(),id->idlist.end());
         $1->setNext($3);
-        $$ = $1;
+        //std::cout<<"idlist"<<std::endl;
+        $$ = (StmtNode*)ids;
     } 
     |
     VarDef { $$ = $1;}
@@ -347,7 +365,8 @@ VarDefList
 VarDeclStmt
     :
     Type VarDefList SEMICOLON {
-        $$ = $2;
+        $$ = new DeclStmt((IdList*)$2);
+        //std::cout<<"declstmt"<<std::endl;
     }
     ;
 ConstDef
@@ -357,7 +376,7 @@ ConstDef
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         se->setConst();
         identifiers->install($1, se);
-        $$ = new DeclStmt(new Id(se));
+        //$$ = new DeclStmt(new Id(se));
     }
     |
      ID ASSIGN Exp {
@@ -365,7 +384,7 @@ ConstDef
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         se->setConst();
         identifiers->install($1, se);
-        $$ = new DeclStmt(new Id(se));
+        //$$ = new DeclStmt(new Id(se));
      }
      ;
 ConstDefList
@@ -381,7 +400,8 @@ ConstDeclStmt
     :
     CONST Type ConstDefList SEMICOLON{
         declType = $2;
-        $$ = $3;
+        //$$ = $3;
+        $$ = new DeclStmt((IdList*)$3);
     }
     ;
 FuncDef
