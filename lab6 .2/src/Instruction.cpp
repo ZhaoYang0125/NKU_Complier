@@ -270,6 +270,20 @@ void AllocaInstruction::output() const
     fprintf(yyout, "  %s = alloca %s, align 4\n", dst.c_str(), type.c_str());
 }
 
+GlobalInstruction::GlobalInstruction(Operand *dst, Operand *src,SymbolEntry *se, BasicBlock *insert_bb): Instruction(GLOBAL, insert_bb){
+    operands.push_back(dst);
+    dst->setDef(this);
+    this->se = se;
+    this->src=src;
+}
+
+void GlobalInstruction::output() const{
+    std::string dst, type;
+    dst = operands[0]->toStr();
+    type = se->getType()->toStr();
+    fprintf(yyout, "%s = global %s %s, align 4\n", dst.c_str(),  type.c_str(), src -> toStr().c_str());
+}
+
 LoadInstruction::LoadInstruction(Operand *dst, Operand *src_addr, BasicBlock *insert_bb) : Instruction(LOAD, insert_bb)
 {
     operands.push_back(dst);

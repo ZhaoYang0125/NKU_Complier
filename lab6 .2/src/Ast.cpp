@@ -50,8 +50,8 @@ std::vector<Instruction *> Node::merge(std::vector<Instruction *> &list1, std::v
 void Ast::genCode(Unit *unit)
 {
     //直接把四个函数都声明了，免得后面出错
-    fprintf(yyout, "declare i32 @getint()\ndeclare void @putint(i32)\n");
-    fprintf(yyout,"declare i32 @getch()\ndeclare void @putch(i32)\n");
+    fprintf(yyout, "declare i32 @getint()\ndeclare i32 @getch()\n");
+    fprintf(yyout,"declare void @putint(i32)\ndeclare void @putch(i32)\n");
     IRBuilder *builder = new IRBuilder(unit);
     Node::setIRBuilder(builder);
     root->genCode();
@@ -280,13 +280,29 @@ void DeclStmt::genCode()
     //std::cout<<"declgencode"<<std::endl;
         IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
         if (se->isGlobal())
-        {
+        {   //设置se
             Operand *addr;
             SymbolEntry *addr_se;
             addr_se = new IdentifierSymbolEntry(*se);
             addr_se->setType(new PointerType(se->getType()));
             addr = new Operand(addr_se);
             se->setAddr(addr);
+            //判断变量是否直接赋值
+            Operand *src;
+            if(ids->assignlist.size()>0&&ids->assignlist[j]){//如果有预先赋值
+                //std::cout<<"i"<<std::endl;
+                //获取赋的值
+                AssignStmt* assign=ids->assignlist[j];
+                assign -> genCode();
+                src = assign-> expr -> getOperand();
+            }
+            else{//没有赋初值则置零
+                SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, 0);
+                Constant* digit = new Constant(se);
+                src = digit -> getOperand();
+            }
+            GlobalInstruction *g=new GlobalInstruction(addr,src,se);
+            g->output();
         }
         else if (se->isLocal())
         {
@@ -297,11 +313,18 @@ void DeclStmt::genCode()
             SymbolEntry *addr_se;
             Type *type;
             type = new PointerType(se->getType());
-            addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());
+            addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());//临时符号表
             addr = new Operand(addr_se);
-            alloca = new AllocaInstruction(addr, se); // allocate space for local id in function stack.
+            alloca = new AllocaInstruction(addr, se); // alloca指令
             entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
             se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+            //如果赋了初值
+            if(ids->assignlist.size()>0&&ids->assignlist[j]!=nullptr){
+                //std::cout<<"hh"<<std::endl;
+                Operand *addr = dynamic_cast<IdentifierSymbolEntry*>(ids -> assignlist[j] -> lval ->getSymPtr())->getAddr();
+                se->setAddr(addr); 
+                ids -> assignlist[j] -> genCode();
+            }
         }
     }
 }

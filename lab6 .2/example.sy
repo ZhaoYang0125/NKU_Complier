@@ -1,15 +1,6 @@
-// Use complex expression in if structure
+
+int k;
 int main () {
-    int a;
-    int b;
-    int c;
-    int d;
-    int result;
-    a = 5;
-    b = 5;
-    c = 1;
-    d = 2;
-    c=a+b;
-    result = -2;
-    return 0;
+	int i = 0;
+	return i;
 }

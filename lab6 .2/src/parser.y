@@ -355,6 +355,7 @@ VarDefList
         IdList *ids=(IdList*)$1;
         IdList *id=(IdList*)$3;
         ids->idlist.insert(ids->idlist.end(),id->idlist.begin(),id->idlist.end());
+        ids->assignlist.insert(ids->assignlist.end(),id->assignlist.begin(),id->assignlist.end());
         $1->setNext($3);
         //std::cout<<"idlist"<<std::endl;
         $$ = (StmtNode*)ids;
@@ -401,6 +402,7 @@ ConstDefList
         IdList *ids=(IdList*)$1;
         IdList *id=(IdList*)$3;
         ids->idlist.insert(ids->idlist.end(),id->idlist.begin(),id->idlist.end());
+        ids->assignlist.insert(ids->assignlist.end(),id->assignlist.begin(),id->assignlist.end());
         $1->setNext($3);
         //std::cout<<"idlist"<<std::endl;
         $$ = (StmtNode*)ids;
