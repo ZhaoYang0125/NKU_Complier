@@ -246,7 +246,7 @@ commentend "*/"
     strcpy(str,yytext);
     yylval.strtype=str;
     std::vector<Type*> vec;
-    Type* funcType = new FunctionType(TypeSystem::intType, vec);
+    Type* funcType = new FunctionType(TypeSystem::voidType, vec);
     SymbolTable* st = identifiers;
     while(st->getPrev())
         st = st->getPrev();
@@ -262,7 +262,7 @@ commentend "*/"
     strcpy(str,yytext);
     yylval.strtype=str;
     std::vector<Type*> vec;
-    Type* funcType = new FunctionType(TypeSystem::intType, vec);
+    Type* funcType = new FunctionType(TypeSystem::voidType, vec);
     SymbolTable* st = identifiers;
     while(st->getPrev())
         st = st->getPrev();

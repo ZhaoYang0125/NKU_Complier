@@ -1,6 +1,8 @@
 //test the priority of add and mul
+const int x=1;
 int main(){
     int a, b, c, d;
+    //a=getint();
     a = 10;
     b = 4;
     c = 2;

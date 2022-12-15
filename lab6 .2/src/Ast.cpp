@@ -618,10 +618,8 @@ void AssignStmt::typeCheck()
     Type* type2 = this->expr->getSymPtr()->getType();
 
     if(type1 != type2){
-        fprintf(
-            stderr,
-            "cannot assign object of type \'%s\' with an rvalue "
-            "of type \'%s\'\n",
+        fprintf(stderr,
+            "assign type error: \'%s\' and \'%s\'\n",
             type1->toStr().c_str(), type2->toStr().c_str());
         exit(EXIT_FAILURE);
     }

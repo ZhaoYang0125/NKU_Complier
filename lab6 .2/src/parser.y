@@ -371,19 +371,25 @@ VarDeclStmt
     ;
 ConstDef
     :
-    ID{
-        IdentifierSymbolEntry *se;
-        se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
-        se->setConst();
-        identifiers->install($1, se);
-        //$$ = new DeclStmt(new Id(se));
-    }
-    |
+    // ID{
+    //     IdentifierSymbolEntry *se;
+    //     se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+    //     se->setConst();
+    //     identifiers->install($1, se);
+    //     //$$ = new DeclStmt(new Id(se));
+    // }
+    // |
      ID ASSIGN Exp {
+         std::vector<Id*> idlist;
+         std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist);//标识符列表
         IdentifierSymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         se->setConst();
         identifiers->install($1, se);
+        tem->idlist.push_back(new Id(se));
+        tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
+        $$=(StmtNode*)tem;
         //$$ = new DeclStmt(new Id(se));
      }
      ;
@@ -392,8 +398,12 @@ ConstDefList
     ConstDef { $$ = $1;}
     |
     ConstDefList COMMA ConstDef {
+        IdList *ids=(IdList*)$1;
+        IdList *id=(IdList*)$3;
+        ids->idlist.insert(ids->idlist.end(),id->idlist.begin(),id->idlist.end());
         $1->setNext($3);
-        $$ = $1;
+        //std::cout<<"idlist"<<std::endl;
+        $$ = (StmtNode*)ids;
     } 
     ;
 ConstDeclStmt
