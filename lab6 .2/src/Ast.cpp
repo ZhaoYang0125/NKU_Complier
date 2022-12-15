@@ -40,6 +40,17 @@ void Node::backPatch(std::vector<Instruction *> &list, BasicBlock *bb)
     }
 }
 
+void Node::backPatchFalse(std::vector<Instruction *> &list, BasicBlock *bb)
+{
+    for (auto &inst : list)
+    {
+        if (inst->isCond())
+            dynamic_cast<CondBrInstruction *>(inst)->setFalseBranch(bb);
+        else if (inst->isUncond())
+            dynamic_cast<UncondBrInstruction *>(inst)->setBranch(bb);
+    }
+}
+
 std::vector<Instruction *> Node::merge(std::vector<Instruction *> &list1, std::vector<Instruction *> &list2)
 {
     std::vector<Instruction *> res(list1);
@@ -92,7 +103,7 @@ void BinaryExpr::genCode()
         // Todo
         BasicBlock* falseBB = new BasicBlock(func);
         expr1->genCode();
-        backPatch(expr1->falseList(), falseBB);
+        backPatchFalse(expr1->falseList(), falseBB);
         builder->setInsertBB(falseBB);
         expr2->genCode();
         false_list = expr2->falseList();
@@ -167,14 +178,12 @@ void BinaryExpr::genCode()
         new CmpInstruction(cmpcode, dst, src1, src2, bb);
 
         // need modify
-        BasicBlock *truebb, *falsebb, *tempbb;
-        //临时假块
-        truebb = new BasicBlock(func);
-        falsebb = new BasicBlock(func);
-        tempbb = new BasicBlock(func);
-
-        true_list.push_back(new CondBrInstruction(truebb, tempbb, dst, bb));
-        false_list.push_back(new UncondBrInstruction(falsebb, tempbb));
+        //自行添加的正确错误列表合并
+        true_list = merge(expr1->trueList(), expr2->trueList());
+        false_list = merge(expr1->falseList(), expr2->falseList());
+        Instruction* temp = new CondBrInstruction(nullptr,nullptr,dst,bb);
+        this->trueList().push_back(temp);
+        this->falseList().push_back(temp);
     }
 }
 
@@ -202,10 +211,22 @@ void IfStmt::genCode()
     func = builder->getInsertBB()->getParent();
     then_bb = new BasicBlock(func);
     end_bb = new BasicBlock(func);
+    //printf("label: %d, label: %d\n", then_bb->getNo(), end_bb->getNo());
+
+    then_bb -> addPred(builder->getInsertBB());//设置其前驱
+    builder -> getInsertBB() -> addSucc(then_bb);//设置后继
+    end_bb -> addPred(then_bb);
+    then_bb -> addSucc(end_bb);//
+    //end_bb -> addPred(builder -> getInsertBB());
+    //builder -> getInsertBB() -> addSucc(end_bb);
+
+    if(cond->getOperand()->getType()->isInt()){ // int to bool
+        cond->int2Bool();
+    }
 
     cond->genCode();
     backPatch(cond->trueList(), then_bb);
-    backPatch(cond->falseList(), end_bb);
+    backPatchFalse(cond->falseList(), end_bb);
 
     builder->setInsertBB(then_bb);
     thenStmt->genCode();
@@ -239,9 +260,13 @@ void IfElseStmt::genCode()
     end_bb -> addPred(else_bb);
     else_bb -> addSucc(end_bb);
 
+    if(cond->getOperand()->getType()->isInt()){ // int to bool
+        cond->int2Bool();
+    }
+
     cond->genCode();
     backPatch(cond->trueList(),then_bb);
-    backPatch(cond->falseList(),else_bb);
+    backPatchFalse(cond->falseList(),else_bb);
 
     //thenStmt
     builder->setInsertBB(then_bb);
@@ -463,7 +488,7 @@ void WhileStmt::genCode()
     cond -> genCode();
 
     backPatch(cond -> trueList(), loop_bb);
-    backPatch(cond -> falseList(), end_bb);
+    backPatchFalse(cond -> falseList(), end_bb);
 
     builder -> setInsertBB(loop_bb);
     Stmt -> genCode();

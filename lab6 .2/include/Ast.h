@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include "Operand.h"
+#include "Type.h"
 
 class SymbolEntry;
 class Unit;
@@ -22,7 +23,8 @@ protected:
     std::vector<Instruction*> false_list;
     static IRBuilder *builder;
     void backPatch(std::vector<Instruction*> &list, BasicBlock*bb);
-    std::vector<Instruction*> merge(std::vector<Instruction*> &list1, std::vector<Instruction*> &list2);
+    void backPatchFalse(std::vector<Instruction *> &list, BasicBlock *bb);//什么功能？
+    std::vector<Instruction *> merge(std::vector<Instruction *> &list1, std::vector<Instruction *> &list2);
 
 public:
     Node();
@@ -47,6 +49,11 @@ public:
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){dst=new Operand(symbolEntry);};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
+    // 
+    void int2Bool(){
+        symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+        dst = new Operand(symbolEntry);
+    }
 };
 
 class UnaryExpr : public ExprNode
@@ -171,7 +178,6 @@ public:
     void output(int level);
     void typeCheck();
     void genCode();
-    ExprNode* getLval(){return lval;}
 };
 
 class ListNode : public Node//序列型变量类
