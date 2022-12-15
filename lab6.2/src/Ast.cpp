@@ -178,7 +178,7 @@ void BinaryExpr::genCode()
         new CmpInstruction(cmpcode, dst, src1, src2, bb);
 
         // need modify
-        //自行添加的正确错误列表合并
+        //正确错误列表合并
         true_list = merge(expr1->trueList(), expr2->trueList());
         false_list = merge(expr1->falseList(), expr2->falseList());
         Instruction* temp = new CondBrInstruction(nullptr,nullptr,dst,bb);
@@ -485,6 +485,9 @@ void WhileStmt::genCode()
 
     builder->setInsertBB(cond_bb);
 
+    if(cond->getOperand()->getType()->isInt()){ // int to bool
+        cond->int2Bool();
+    }
     cond -> genCode();
 
     backPatch(cond -> trueList(), loop_bb);
