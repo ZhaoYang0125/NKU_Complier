@@ -1,11 +1,15 @@
-//test the priority of add and mul
-const int x=1;
-int main(){
-    int a, b, c, d;
-    //a=getint();
-    a = 10;
-    b = 4;
-    c = 2;
+// Use complex expression in if structure
+int main () {
+    int a;
+    int b;
+    int c;
+    int d;
+    int result;
+    a = 5;
+    b = 5;
+    c = 1;
     d = 2;
-    return c + a * b - d; 
+    c=a+b;
+    result = -2;
+    return 0;
 }

@@ -49,6 +49,9 @@ std::vector<Instruction *> Node::merge(std::vector<Instruction *> &list1, std::v
 
 void Ast::genCode(Unit *unit)
 {
+    //直接把四个函数都声明了，免得后面出错
+    fprintf(yyout, "declare i32 @getint()\ndeclare void @putint(i32)\n");
+    fprintf(yyout,"declare i32 @getch()\ndeclare void @putch(i32)\n");
     IRBuilder *builder = new IRBuilder(unit);
     Node::setIRBuilder(builder);
     root->genCode();
@@ -224,7 +227,7 @@ void IfElseStmt::genCode()
     else_bb = new BasicBlock(func);
     end_bb = new BasicBlock(func);
 
-    //设置各种前驱后继
+    //设置前驱后继
     then_bb -> addPred(builder -> getInsertBB());
     builder -> getInsertBB() -> addSucc(then_bb);
 
@@ -366,16 +369,15 @@ void UnaryExpr::genCode()
     else if (op == SUB || op == ADD) 
     {
         expr->genCode();
-        Operand* src1 = new Operand(new ConstantSymbolEntry(dst->getType(), 0));
-
         //Operand* temp = new Operand(new TemporarySymbolEntry(TypeSystem::intType,SymbolTable::getLabel()));
-        Operand* src2 = expr->getOperand();
+        Operand* src2 = expr->getOperand();//获得表达式源操作数
 
         // to complete
-        if (expr->getOperand()->getType() == TypeSystem::boolType) 
+        if (src2->getType() == TypeSystem::boolType) 
         {
+            //std::cout<<"isbool"<<std::endl;
             Operand* temp =new Operand(new TemporarySymbolEntry(TypeSystem::intType,SymbolTable::getLabel()));
-            new ZextInstruction(temp, expr->dst,bb); 
+            new ZextInstruction(temp, expr->dst,bb); //bool型扩展为整形
             expr->dst = temp;   
             src2 = temp; 
         }
@@ -391,6 +393,8 @@ void UnaryExpr::genCode()
         default:
             break;
         }
+        Operand* src1 = new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0));
+        if(src1)
         new BinaryInstruction(opcode, dst, src1, src2, bb);
     }
 }
