@@ -37,7 +37,7 @@ void BasicBlock::remove(Instruction *inst)
 
 void BasicBlock::output() const
 {
-    if(!empty()){
+    if(!this->empty()){
         fprintf(yyout, "B%d:", no);
         if (!pred.empty())
         {
