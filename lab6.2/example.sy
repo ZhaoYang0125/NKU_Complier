@@ -19,5 +19,5 @@ int main()
 		}
 		i = i + i;
 	}
-	return 0;
+	//return ;
 }

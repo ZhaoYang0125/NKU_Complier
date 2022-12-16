@@ -11,7 +11,7 @@ int main()
 		while(j)
 		{
 			// int --> bool
-			if(i && j+1)
+			if(i && j)
 			{
 				sum = sum + i + j;
 			}

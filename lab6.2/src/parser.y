@@ -112,6 +112,11 @@ ReturnStmt
     RETURN Exp SEMICOLON{
         $$ = new ReturnStmt($2);
     }
+    | 
+    RETURN SEMICOLON{
+        ExprNode* retValue=nullptr;
+        $$=new ReturnStmt(retValue);
+    }
     ;
 WhileStmt
     :
@@ -172,16 +177,22 @@ UnaryExp
     ID LPAREN FuncRParams RPAREN {//函数调用
         SymbolEntry* se;
         se = identifiers->lookup($1);
-        if (se == nullptr)
+        if (se == nullptr){
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+            delete [](char*)$1;
+            assert(se!=nullptr);
+        }
         $$ = new CallExpr(se, $3);
     }
     |
     ID LPAREN RPAREN {
         SymbolEntry* se;
         se = identifiers->lookup($1);
-        if (se == nullptr)
+        if (se == nullptr){
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
+            delete [](char*)$1;
+            assert(se!=nullptr);
+        }
         $$ = new CallExpr(se);
     }
     |

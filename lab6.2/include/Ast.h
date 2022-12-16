@@ -33,7 +33,7 @@ public:
     void setNext(Node* next);
     static void setIRBuilder(IRBuilder*ib) {builder = ib;};
     virtual void output(int level) = 0;
-    virtual void typeCheck() = 0;
+    virtual void typeCheck(Type* retType=nullptr) = 0;
     virtual void genCode() = 0;
     std::vector<Instruction*>& trueList() {return true_list;}
     std::vector<Instruction*>& falseList() {return false_list;}
@@ -43,12 +43,13 @@ class ExprNode : public Node
 {
 protected:
     SymbolEntry *symbolEntry;
-    
+    Type* type;
 public:
     Operand *dst;   // The result of the subtree is stored into dst.
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){dst=new Operand(symbolEntry);};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
+    Type* getType() { return type; };
     // int类型转化为bool型 /*retodo*/
     void int2Bool(){
         symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
@@ -66,7 +67,7 @@ public:
     UnaryExpr(SymbolEntry *se, int op, ExprNode* expr) : ExprNode(se), op(op), expr(expr){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -78,7 +79,7 @@ public:
     CallExpr(SymbolEntry* se, ExprNode* param=NULL);
     
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -92,7 +93,7 @@ public:
     BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){}; // new dst
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -102,7 +103,7 @@ public:
     Constant(SymbolEntry *se) : ExprNode(se){dst = new Operand(se);};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -112,7 +113,7 @@ public:
     Id(SymbolEntry *se) : ExprNode(se){SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -130,7 +131,8 @@ public:
     ExprStmt(ExprNode* expr) : expr(expr){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
+    //void typeCheck();
     void genCode();
 };
 
@@ -139,7 +141,7 @@ public:
     BlankStmt(){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -151,7 +153,7 @@ public:
     CompoundStmt(StmtNode *stmt) : stmt(stmt) {};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -163,7 +165,7 @@ public:
     SeqNode(StmtNode *stmt1, StmtNode *stmt2) : stmt1(stmt1), stmt2(stmt2){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -176,7 +178,7 @@ public:
     AssignStmt(ExprNode *lval, ExprNode *expr) : lval(lval), expr(expr) {};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -192,7 +194,7 @@ public:
     std::vector<AssignStmt*> assignlist;//声明时直接赋值
     IdList(std::vector<Id*>idlist,std::vector<AssignStmt*>ass):idlist(idlist),assignlist(ass){};
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -203,7 +205,7 @@ private:
 public:
     DeclStmt(IdList *ids) : ids(ids){};
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -216,7 +218,7 @@ public:
     IfStmt(ExprNode *cond, StmtNode *thenStmt) : cond(cond), thenStmt(thenStmt){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -230,7 +232,7 @@ public:
     IfElseStmt(ExprNode *cond, StmtNode *thenStmt, StmtNode *elseStmt) : cond(cond), thenStmt(thenStmt), elseStmt(elseStmt) {};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -243,7 +245,7 @@ public:
     WhileStmt(ExprNode *cond, StmtNode *Stmt) : cond(cond), Stmt(Stmt) {};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -256,7 +258,7 @@ public:
     ReturnStmt(ExprNode*retValue) : retValue(retValue) {};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -265,7 +267,7 @@ class BreakStmt : public StmtNode
 public:
     BreakStmt() {};
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -274,7 +276,7 @@ class ContinueStmt : public StmtNode
 public:
     ContinueStmt() {};
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 };
 
@@ -287,7 +289,7 @@ public:
     FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
 
     void output(int level);
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode();
 
     //
@@ -303,7 +305,7 @@ public:
     void setRoot(Node*n) {root = n;}
 
     void output();
-    void typeCheck();
+    void typeCheck(Type* retType=nullptr);
     void genCode(Unit *unit);
 };
 
