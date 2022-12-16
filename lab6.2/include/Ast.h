@@ -22,8 +22,8 @@ protected:
     std::vector<Instruction*> true_list;
     std::vector<Instruction*> false_list;
     static IRBuilder *builder;
-    void backPatch(std::vector<Instruction*> &list, BasicBlock*bb);
-    void backPatchFalse(std::vector<Instruction *> &list, BasicBlock *bb);//什么功能？
+    void backPatch(std::vector<Instruction*> &list, BasicBlock*bb);//正确分支回填
+    void backPatchFalse(std::vector<Instruction *> &list, BasicBlock *bb);//错误分支回填
     std::vector<Instruction *> merge(std::vector<Instruction *> &list1, std::vector<Instruction *> &list2);
 
 public:
@@ -49,7 +49,7 @@ public:
     ExprNode(SymbolEntry *symbolEntry) : symbolEntry(symbolEntry){dst=new Operand(symbolEntry);};
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
-    // 
+    // int类型转化为bool型 /*retodo*/
     void int2Bool(){
         symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         dst = new Operand(symbolEntry);

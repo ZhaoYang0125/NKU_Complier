@@ -1,11 +1,23 @@
-int main() {
-    int a;
-    a = 10;
-    if (+-!!!a) {
-        a = - - -1;
-    }
-    else {
-        a = 0;
-    }
-    return a;
+/* Implicit conversion*/
+
+int main()
+{
+	int sum = 0;
+	int i = 0;
+	while(i < 10)
+	{
+		int j = 10;
+		// int --> bool
+		while(j)
+		{
+			// int --> bool
+			if(i && j)
+			{
+				sum = sum + i + j;
+			}
+			j = j - 1;
+		}
+		i = i + i;
+	}
+	return 0;
 }

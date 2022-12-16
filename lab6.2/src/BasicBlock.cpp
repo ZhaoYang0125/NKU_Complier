@@ -24,7 +24,6 @@ void BasicBlock::insertBefore(Instruction *dst, Instruction *src)
     dst->setNext(src);
     src->getPrev()->setNext(dst);
     src->setPrev(dst);
-    
     dst->setParent(this);
 }
 
@@ -37,7 +36,7 @@ void BasicBlock::remove(Instruction *inst)
 
 void BasicBlock::output() const
 {
-    if(!this->empty()){
+    if(!this->empty()){//判断是否为空
         fprintf(yyout, "B%d:", no);
         if (!pred.empty())
         {

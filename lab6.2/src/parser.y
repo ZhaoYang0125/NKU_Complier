@@ -326,12 +326,19 @@ VarDef
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry* se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
-        identifiers->install($1, se);
-        //$$ = new DeclStmt(new Id(se));
+        bool a=false;
+        if(!identifiers->lookup($1)){
+            identifiers->install($1, se);
+            a=false;    
+        }
+        else{
+            a=true;
+            fprintf(stderr,"identifier %s is redefined\n",(char*)$1);
+            delete [](char*)$1;
+            assert( !a);
+        }
         tem->idlist.push_back(new Id(se));
         $$=(StmtNode*)tem;
-        //$$=new Id(se);
-        //std::cout<<"id"<<std::endl;
         delete []$1;
     }
     |
@@ -341,7 +348,17 @@ VarDef
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
-        identifiers->install($1, se);
+        bool a=false;
+        if(!identifiers->lookup($1)){
+            identifiers->install($1, se);
+            a=false;    
+        }
+        else{
+            a=true;
+            fprintf(stderr,"identifier %s is redefined\n",(char*)$1);
+            delete [](char*)$1;
+            assert( !a);
+        }
         //$$ = new DeclStmt(new Id(se));
         tem->idlist.push_back(new Id(se));
         tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
@@ -373,14 +390,6 @@ VarDeclStmt
     ;
 ConstDef
     :
-    // ID{
-    //     IdentifierSymbolEntry *se;
-    //     se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
-    //     se->setConst();
-    //     identifiers->install($1, se);
-    //     //$$ = new DeclStmt(new Id(se));
-    // }
-    // |
      ID ASSIGN Exp {
          std::vector<Id*> idlist;
          std::vector<AssignStmt*> assignlist;
