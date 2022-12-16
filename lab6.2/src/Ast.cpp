@@ -281,13 +281,24 @@ void IfElseStmt::genCode()
     end_bb -> addPred(else_bb);
     else_bb -> addSucc(end_bb);
 
+    cond->genCode();
     Type* temp = cond->getSymPtr()->getType();
+    //下面判断只对单目运算式有效
     if(temp->isInt() && ((IntType*) temp)->getSize() == 32){
         //printf("cond se: %s\n", cond->getSymPtr()->getType()->toStr().c_str());
+        BasicBlock* bb=cond->builder->getInsertBB();
+        Operand *src = cond->getOperand();
+        SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, 0);
+        Constant* digit = new Constant(se);
         cond->int2Bool();
+        CmpInstruction* temp1 = new CmpInstruction(CmpInstruction::NE, cond->dst, src, digit->getOperand(), bb);
+        cond->trueList().push_back(temp1);//更新列表
+        cond->falseList().push_back(temp1);
+        Instruction* temp2 = new CondBrInstruction(nullptr,nullptr,cond->dst,bb);
+        cond->trueList().push_back(temp2);
+        cond->falseList().push_back(temp2);
     }
 
-    cond->genCode();
     backPatch(cond->trueList(),then_bb);
     backPatchFalse(cond->falseList(),else_bb);
 
@@ -470,7 +481,7 @@ void UnaryExpr::genCode()
             break;
         }
         Operand* src1 = new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0));
-        if(src1)
+        //if(src1)
         new BinaryInstruction(opcode, dst, src1, src2, bb);
     }
 }
@@ -508,9 +519,9 @@ void WhileStmt::genCode()
 
     builder->setInsertBB(cond_bb);
 
-    if(cond->getOperand()->getType()->isInt()){ // int to bool
-        cond->int2Bool();
-    }
+    // if(cond->getOperand()->getType()->isInt()){ // int to bool
+    //     cond->int2Bool();
+    // }
     cond -> genCode();
 
     backPatch(cond -> trueList(), loop_bb);
