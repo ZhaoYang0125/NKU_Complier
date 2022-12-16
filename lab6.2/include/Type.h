@@ -26,6 +26,7 @@ private:
 public:
     IntType(int size) : Type(Type::INT), size(size){};
     std::string toStr();
+    int getSize(){ return size;}
 };
 
 class VoidType : public Type
