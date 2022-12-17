@@ -17,6 +17,5 @@ void func2(int b)
 int main()
 {
 	int ret = func1(1) + func2(2);
-	func1(1);
-	return 0;
+	return ret;
 }

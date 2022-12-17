@@ -458,9 +458,13 @@ void CallExpr::genCode()
         temp = ((ExprNode*)temp->getNext());
     }
     BasicBlock* bb = builder->getInsertBB();
-    Type *type2 = new IntType(32);  // temp register for function retValue
-    SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
-    dst = new Operand(addr_se2);
+    Type* retType = symbolEntry->getType();
+    if(!retType->isVoid())
+    {
+        Type *type2 = new IntType(32);  // temp register for function retValue
+        SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
+        dst = new Operand(addr_se2);
+    }
     //std::cout<<this->type->toStr()<<std::endl;
     new CallInstruction(dst, symbolEntry, operands, bb);
 }
@@ -639,23 +643,20 @@ void BinaryExpr::typeCheck(Type* retType)
     expr2->typeCheck(retType);
     Type *type1 = expr1->getSymPtr()->getType();
     Type *type2 = expr2->getSymPtr()->getType();
-    //std::cout<<expr1->getType()->toStr()<<std::endl;
-    //  if(expr1->getType()->isFunc())
-    //      type1=((FunctionType*)expr1->getSymPtr()->getType())->getRetType();
-    //  if(expr2->getType()->isFunc())
-    //      type2=((FunctionType*)expr2->getSymPtr()->getType())->getRetType();
-    
-    if (type1 != type2)
+
+    if (!type1->equal(type2))
     {
         fprintf(stderr, "类型为 %s 的变量 %s 和类型为 %s 的变量 %s不匹配。\n",
                 type1->toStr().c_str(), expr1->getSymPtr()->toStr().c_str(),
-                type2->toStr().c_str(),expr2->getSymPtr()->toStr().c_str());
+                type2->toStr().c_str(), expr2->getSymPtr()->toStr().c_str());
         exit(EXIT_FAILURE);
     }
-    if(type1->isVoid()||type2->isVoid()){
-        fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",
-                expr1->getSymPtr()->toStr().c_str());
-        exit(EXIT_FAILURE);
+    if(expr1->getType()){
+        if(expr1->getType()->isVoid()){
+            fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",
+                    expr1->getSymPtr()->toStr().c_str());
+            exit(EXIT_FAILURE);
+        }
     }
     if(expr2->getType()){
         if(expr2->getType()->isVoid()){
@@ -718,6 +719,14 @@ void DeclStmt::typeCheck(Type* retType)
 {
     // Todo
     // nothing to do
+    for(unsigned long int j = 0; j < ids->idlist.size(); j++)
+    {
+       //如果赋了初值
+        if(ids->assignlist.size() > 0 && ids->assignlist[j] != nullptr){
+            ids -> assignlist[j] -> typeCheck();
+        }
+        //存疑
+    }
 }
 
 void ReturnStmt::typeCheck(Type* retType)
