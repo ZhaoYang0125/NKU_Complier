@@ -37,6 +37,7 @@
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDef ConstDeclStmt ConstDef FuncDef
 %nterm <stmttype> ExprStmt BlankStmt VarDefList ConstDefList
 %nterm <stmttype> BreakStmt ContinueStmt
+%nterm <stmttype> FuncFParam FuncFParams
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
 %nterm <type> Type
@@ -354,8 +355,8 @@ VarDef
     }
     |
      ID ASSIGN Exp {
-         std::vector<Id*> idlist;
-         std::vector<AssignStmt*> assignlist;
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
@@ -437,22 +438,108 @@ ConstDeclStmt
         $$ = new DeclStmt((IdList*)$3);
     }
     ;
+FuncFParams
+    : 
+    FuncFParams COMMA FuncFParam {
+        IdList *ids=(IdList*)$1;
+        IdList *id=(IdList*)$3;
+        ids->idlist.insert(ids->idlist.end(),id->idlist.begin(),id->idlist.end());
+        ids->assignlist.insert(ids->assignlist.end(),id->assignlist.begin(),id->assignlist.end());
+        $1->setNext($3);
+        //std::cout<<"idlist"<<std::endl;
+        $$ = (StmtNode*)ids;
+    }
+    | 
+    FuncFParam {
+        $$ = $1;
+    }
+    ;
+FuncFParam
+    : 
+    Type ID {
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist);//标识符列表
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
+        // bool a=false;
+        // if(!identifiers->lookup($2)){
+        identifiers->install($2, se);
+        //     a=false;    
+        // }
+        // else{
+        //     a=true;
+        //     fprintf(stderr,"identifier %s is redefined\n",(char*)$2);
+        //     delete [](char*)$2;
+        //     assert(!a);
+        // }
+        tem->idlist.push_back(new Id(se));
+        $$=(StmtNode*)tem;
+        delete []$2;
+    }
+    ;
 FuncDef
     :
-    Type ID {
+    Type ID LPAREN {
         Type *funcType;
         funcType = new FunctionType($1,{});
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
-        identifiers->install($2, se);
+        bool a=false;
+        if(!identifiers->lookup($2)){
+            identifiers->install($2, se);
+            a=false;    
+        }
+        else{
+            a=true;
+            fprintf(stderr,"function %s is redefined\n",(char*)$2);
+            delete [](char*)$2;
+            assert(!a);
+        }
         identifiers = new SymbolTable(identifiers);
     }
-    LPAREN RPAREN
+    RPAREN
     BlockStmt
     {
         SymbolEntry *se;
         se = identifiers->lookup($2);
         assert(se != nullptr);
         $$ = new FunctionDef(se, $6);
+        SymbolTable *top = identifiers;
+        identifiers = identifiers->getPrev();
+        delete top;
+        delete []$2;
+    }
+    |
+    Type ID LPAREN FuncFParams {
+        IdList* params=(IdList*)$4;
+        std::vector<Type*> paramsType;
+        for(unsigned int i=0;i<params->idlist.size();i++){
+            Type* t=params->idlist[i]->getType();
+            paramsType.push_back(t);
+        }
+        Type *funcType = new FunctionType($1,paramsType);
+        SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
+        bool a=false;
+        if(!identifiers->lookup($2)){
+            identifiers->install($2, se);
+            a=false;    
+        }
+        else{
+            a=true;
+            fprintf(stderr,"function %s is redefined\n",(char*)$2);
+            delete [](char*)$2;
+            assert(!a);
+        }
+        identifiers = new SymbolTable(identifiers);
+    }
+    RPAREN
+    BlockStmt   
+    {
+        SymbolEntry *se;
+        se = identifiers->lookup($2);
+        assert(se != nullptr);
+        $$ = new FunctionDef(se, (IdList*)$4 ,$7);
+        //std::cout<<"stmt"<<std::endl;
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
         delete top;

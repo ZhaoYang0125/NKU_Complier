@@ -77,6 +77,34 @@ void FunctionDef::genCode()
     // set the insert point to the entry basicblock of this function.
     builder->setInsertBB(entry);
 
+    if(ids!=nullptr)
+    for(unsigned long int j=0;j<ids->idlist.size();j++){
+        IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
+        Function *func = builder->getInsertBB()->getParent();
+        BasicBlock *entry = func->getEntry();
+        Instruction *alloca;
+        Operand *addr;
+        SymbolEntry *addr_se;
+        Type *type;
+        type = new PointerType(se->getType());
+        addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());//临时符号表
+        addr = new Operand(addr_se);
+        
+        Type *type2 = new IntType(32);
+        SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
+        Operand *addr2 = new Operand(addr_se2);
+
+        
+        alloca = new AllocaInstruction(addr, se); // alloca指令
+        entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
+        
+
+        StoreInstruction *store = new StoreInstruction(addr, addr2);
+        entry -> insertBack(store);
+        se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+        func->params.push_back(addr2); 
+    }
+
     stmt->genCode();
 
     /**
@@ -433,6 +461,7 @@ void CallExpr::genCode()
     Type *type2 = new IntType(32);  // temp register for function retValue
     SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
     dst = new Operand(addr_se2);
+    //std::cout<<this->type->toStr()<<std::endl;
     new CallInstruction(dst, symbolEntry, operands, bb);
 }
 
@@ -563,11 +592,14 @@ void CallExpr::typeCheck(Type* retType)
 {
     // Todo
     // nothing
+    //std::cout<<"expr1->getType()->toStr()"<<std::endl;
+    //this->type=((FunctionType*)symbolEntry->getType())->getRetType();
 }
 void UnaryExpr::typeCheck(Type* retType)
 {
     // Todo
     // nothing
+    //std::cout<<"expr1->getType()->toStr()"<<std::endl;
 }
 void BlankStmt::typeCheck(Type* retType)
 {
@@ -607,11 +639,30 @@ void BinaryExpr::typeCheck(Type* retType)
     expr2->typeCheck(retType);
     Type *type1 = expr1->getSymPtr()->getType();
     Type *type2 = expr2->getSymPtr()->getType();
+    //std::cout<<expr1->getType()->toStr()<<std::endl;
+    //  if(expr1->getType()->isFunc())
+    //      type1=((FunctionType*)expr1->getSymPtr()->getType())->getRetType();
+    //  if(expr2->getType()->isFunc())
+    //      type2=((FunctionType*)expr2->getSymPtr()->getType())->getRetType();
+    
     if (type1 != type2)
     {
-        fprintf(stderr, "In BinaryExpr, type %s and %s dismatch",
-                type1->toStr().c_str(), type2->toStr().c_str());
+        fprintf(stderr, "类型为 %s 的变量 %s 和类型为 %s 的变量 %s不匹配。\n",
+                type1->toStr().c_str(), expr1->getSymPtr()->toStr().c_str(),
+                type2->toStr().c_str(),expr2->getSymPtr()->toStr().c_str());
         exit(EXIT_FAILURE);
+    }
+    if(type1->isVoid()||type2->isVoid()){
+        fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",
+                expr1->getSymPtr()->toStr().c_str());
+        exit(EXIT_FAILURE);
+    }
+    if(expr2->getType()){
+        if(expr2->getType()->isVoid()){
+            fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",
+                    expr2->getSymPtr()->toStr().c_str());
+            exit(EXIT_FAILURE);
+        }
     }
     symbolEntry->setType(type1);
 }
@@ -686,6 +737,7 @@ void ReturnStmt::typeCheck(Type* retType)
 void AssignStmt::typeCheck(Type* retType)
 {
     // Todo
+    expr->typeCheck();
 }
 
 void UnaryExpr::output(int level)
@@ -805,34 +857,34 @@ void Id::output(int level)
 CallExpr::CallExpr(SymbolEntry *se, ExprNode *param /*=NULL*/) : ExprNode(se), param(param)
 { // 有参函数调用
     SymbolEntry *s = se;
-    int paramnum = 0;
     ExprNode *temp = param;
+    int paramnum = 0;
     while (temp)
     {
         temp = (ExprNode *)(temp->getNext());
         paramnum++;
     }
-    std::vector<Type *> params;
-    while (s)
-    {
-        Type *type = s->getType();
-        params.push_back(type);
-        s = s->getNext();
-    }
-    if (paramnum == 0)
-    {
-        paramnum++;
-    }
-    //    printf("%d, %d\n", paramnum, int(params.size()));
-    if ((long unsigned int)paramnum == params.size())
+    FunctionType* type=(FunctionType*)s->getType();
+    int paramsize=type->paramsType.size();
+
+    this->type=((FunctionType*)s->getType())->getRetType();
+    // std::vector<Type *> params;
+    // while (s)
+    // {
+    //     Type *type = s->getType();
+    //     params.push_back(type);
+    //     s = s->getNext();
+    // }
+    if (paramnum == paramsize)
     {
         // this->symbolEntry = s;
     }
     else
     {
-        fprintf(stderr, "the %d %d count of params is wrong\n", int(paramnum), int(params.size()));
+        fprintf(stderr, "函数 \'%s\'有%d个参数，但在调用时传了%d个。\n", se->toStr().c_str(), paramsize,int(paramnum));
+        exit(EXIT_FAILURE);
     }
-    params.clear();
+    //params.clear();
 };
 
 void ExprStmt::output(int level)

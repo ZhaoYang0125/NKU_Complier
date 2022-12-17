@@ -40,8 +40,8 @@ class FunctionType : public Type
 {
 private:
     Type *returnType;
-    std::vector<Type*> paramsType;
 public:
+    std::vector<Type*> paramsType;
     FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
     Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
     Type* getRetType() {return returnType;};

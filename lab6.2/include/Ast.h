@@ -284,9 +284,11 @@ class FunctionDef : public StmtNode
 {
 private:
     SymbolEntry *se;
+    IdList* ids;//参数列表
     StmtNode *stmt;
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){ids=nullptr;};
+    FunctionDef(SymbolEntry *se, IdList *ids, StmtNode *stmt) : se(se), ids(ids), stmt(stmt){};
 
     void output(int level);
     void typeCheck(Type* retType=nullptr);

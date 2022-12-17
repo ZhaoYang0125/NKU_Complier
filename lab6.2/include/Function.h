@@ -22,11 +22,10 @@ private:
     BasicBlock *entry;
     Unit *parent;
 
-    std::vector<Operand *> params;//参数列表
-    
 public:
+    std::vector<Operand *> params;//参数列表
     Function(Unit *, SymbolEntry *);
-    ~Function();
+    ~Function(){};
     void insertBlock(BasicBlock *bb) { block_list.push_back(bb); };
     BasicBlock *getEntry() { return entry; };
     void remove(BasicBlock *bb);
@@ -37,6 +36,7 @@ public:
     reverse_iterator rbegin() { return block_list.rbegin(); };
     reverse_iterator rend() { return block_list.rend(); };
     SymbolEntry *getSymPtr() { return sym_ptr; };
+    //void addparams(Operand* param){params.push_back(param);}//添加一个参数
 };
 
 #endif
