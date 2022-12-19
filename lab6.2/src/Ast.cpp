@@ -411,7 +411,6 @@ void DeclStmt::genCode()
                 se->setAddr(addr); 
                 ids -> assignlist[j] -> genCode();
             }
-            //存疑
         }
     }
 }

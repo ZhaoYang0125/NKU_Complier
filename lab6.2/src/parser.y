@@ -510,14 +510,9 @@ FuncDef
         delete []$2;
     }
     |
-    Type ID LPAREN FuncFParams {
-        IdList* params=(IdList*)$4;
-        std::vector<Type*> paramsType;
-        for(unsigned int i=0;i<params->idlist.size();i++){
-            Type* t=params->idlist[i]->getType();
-            paramsType.push_back(t);
-        }
-        Type *funcType = new FunctionType($1,paramsType);
+    Type ID LPAREN 
+    {
+        Type *funcType = new FunctionType($1,{});
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
         bool a=false;
         if(!identifiers->lookup($2)){
@@ -532,13 +527,24 @@ FuncDef
         }
         identifiers = new SymbolTable(identifiers);
     }
+    FuncFParams {
+        IdList* params=(IdList*)$5;
+        std::vector<Type*> paramsType;
+        for(unsigned int i=0;i<params->idlist.size();i++){
+            Type* t=params->idlist[i]->getType();
+            paramsType.push_back(t);
+        }
+        SymbolEntry *se = identifiers->lookup($2);
+        assert(se != nullptr);
+        ((FunctionType*)(se->getType()))->paramsType=paramsType;
+    }
     RPAREN
     BlockStmt   
     {
         SymbolEntry *se;
         se = identifiers->lookup($2);
         assert(se != nullptr);
-        $$ = new FunctionDef(se, (IdList*)$4 ,$7);
+        $$ = new FunctionDef(se, (IdList*)$5 ,$8);
         //std::cout<<"stmt"<<std::endl;
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
