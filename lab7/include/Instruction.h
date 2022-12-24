@@ -70,6 +70,7 @@ public:
     GlobalInstruction(Operand *dst, Operand *src,SymbolEntry *se, BasicBlock *insert_bb = nullptr);
     //~GlobalInstruction();
     void output() const;
+    void genMachineCode(AsmBuilder*);
 };
 
 class LoadInstruction : public Instruction
@@ -153,11 +154,11 @@ public:
 class CallInstruction : public Instruction
 {
 public:
-    CallInstruction(Operand* dst, SymbolEntry* func, 
-                    std::vector<Operand*> params, 
+    CallInstruction(Operand* dst, SymbolEntry* func, std::vector<Operand*> params, 
                     BasicBlock* insert_bb = nullptr);
     ~CallInstruction();
     void output() const;
+    void genMachineCode(AsmBuilder*);
 protected:
     SymbolEntry* func;
     Operand* dst;
@@ -169,6 +170,7 @@ protected:
  public:
     ZextInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
     void output() const;
+    void genMachineCode(AsmBuilder*);
  };
 
 //异或
@@ -177,6 +179,7 @@ class XorInstruction:public Instruction
  public:
     XorInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
     void output() const;
+    void genMachineCode(AsmBuilder*);
  };
  
 #endif

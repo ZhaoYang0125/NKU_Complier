@@ -62,8 +62,8 @@ std::vector<Instruction *> Node::merge(std::vector<Instruction *> &list1, std::v
 void Ast::genCode(Unit *unit)
 {
     //直接把四个函数都声明了，免得后面出错
-    fprintf(yyout, "declare i32 @getint()\ndeclare i32 @getch()\n");
-    fprintf(yyout,"declare void @putint(i32)\ndeclare void @putch(i32)\n");
+    //fprintf(yyout, "declare i32 @getint()\ndeclare i32 @getch()\n");
+    //fprintf(yyout,"declare void @putint(i32)\ndeclare void @putch(i32)\n");
     IRBuilder *builder = new IRBuilder(unit);
     Node::setIRBuilder(builder);
     root->genCode();

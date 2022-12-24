@@ -565,3 +565,18 @@ void RetInstruction::genMachineCode(AsmBuilder* builder)
     * 2. Restore callee saved registers and sp, fp
     * 3. Generate bx instruction */
 }
+void CallInstruction::genMachineCode(AsmBuilder* builder){
+    // TODO
+}
+
+void ZextInstruction::genMachineCode(AsmBuilder* builder){
+    // TODO
+}
+
+void XorInstruction::genMachineCode(AsmBuilder* builder){
+    // TODO
+}
+
+void GlobalInstruction::genMachineCode(AsmBuilder* builder){
+    // TODO
+}
