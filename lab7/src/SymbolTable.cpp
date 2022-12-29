@@ -109,7 +109,6 @@ SymbolTable::SymbolTable(SymbolTable *prev)
 */
 SymbolEntry* SymbolTable::lookup(std::string name)
 {
-    // Todo
     SymbolTable* table = this;
     while(table!=nullptr)
     {

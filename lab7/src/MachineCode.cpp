@@ -100,6 +100,21 @@ void MachineInstruction::PrintCond()
     case LT:
         fprintf(yyout, "lt");
         break;
+    case GT:
+        fprintf(yyout, "gt");
+        break;
+    case LE:
+        fprintf(yyout, "le");
+        break;
+    case GE:
+        fprintf(yyout, "ge");
+        break;
+    case EQ:
+        fprintf(yyout, "eq");
+        break;
+    case NE:
+        fprintf(yyout, "ne");
+        break;
     default:
         break;
     }
@@ -208,24 +223,63 @@ MovMInstruction::MovMInstruction(MachineBlock* p, int op,
     MachineOperand* dst, MachineOperand* src,
     int cond)
 {
-    // TODO
+    // TODO 设置一些成员变量的值
+    this->parent=p;
+    this->op=op;
+    this->cond=cond;
+    this->type=MachineInstruction::MOV;
+    this->addDef(dst);
+    this->addUse(src);
+    //设置两个操作数的parent
+    dst->setParent(this);
+    src->setParent(this);
 }
 
 void MovMInstruction::output() 
 {
     // TODO
+    fprintf(yyout, "\tmov");
+    PrintCond();
+    fprintf(yyout, " ");
+    this->def_list[0]->output();
+    fprintf(yyout, ", ");
+    this->use_list[0]->output();
+    fprintf(yyout, "\n");
 }
 
 BranchMInstruction::BranchMInstruction(MachineBlock* p, int op, 
-    MachineOperand* dst, 
-    int cond)
+    MachineOperand* dst, int cond)
 {
     // TODO
+    this->parent = p;
+    this->op = op;
+    this->cond = cond;
+    this->type = MachineInstruction::BRANCH;
+    this->addUse(dst);
+    dst->setParent(this);
 }
 
 void BranchMInstruction::output()
 {
     // TODO
+    switch (op) 
+    {
+        case B:
+            fprintf(yyout, "\tb");
+            break;
+        case BX:
+            fprintf(yyout, "\tbx");
+            break;
+        case BL:
+            fprintf(yyout, "\tbl");
+            break;
+        default:
+            break;
+    }
+    PrintCond();
+    fprintf(yyout, " ");
+    this->use_list[0]->output();
+    fprintf(yyout, "\n");
 }
 
 CmpMInstruction::CmpMInstruction(MachineBlock* p, 

@@ -557,24 +557,59 @@ void CondBrInstruction::genMachineCode(AsmBuilder* builder)
     // TODO
 }
 
+/*********************************************************/
 void RetInstruction::genMachineCode(AsmBuilder* builder)
 {
     // TODO
-    /* HINT:
-    * 1. Generate mov instruction to save return value in r0
-    * 2. Restore callee saved registers and sp, fp
-    * 3. Generate bx instruction */
+    auto cur_block = builder->getBlock();
+    //mov保存返回值到r0
+    if(!operands.empty()){//有返回值
+        auto dst = new MachineOperand(MachineOperand::REG,0);
+        auto src = genMachineOperand(operands[0]);
+        auto cur_inst =new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src);
+        cur_block->InsertInst(cur_inst);
+    }
+    //调整栈帧 保存寄存器sp
+    auto sp = new MachineOperand(MachineOperand::REG, 13);
+    auto funcSize =new MachineOperand(MachineOperand::IMM, builder->getFunction()->AllocSpace(0));//开辟函数大小空间
+    cur_block->InsertInst(new BinaryMInstruction(cur_block, BinaryMInstruction::ADD,sp, sp, funcSize));
+    //bx指令，跳转lr寄存器
+    auto lr = new MachineOperand(MachineOperand::REG, 14);
+    cur_block->InsertInst(new BranchMInstruction(cur_block, BranchMInstruction::BX, lr));
 }
+
 void CallInstruction::genMachineCode(AsmBuilder* builder){
     // TODO
+    // auto cur_block = builder->getBlock();
+    // MachineOperand* operand;  
+    // MachineInstruction* cur_inst;
+    // 在进行函数调用时，对于含参函数，需要使用 R0-R3 寄存器传递参数，
+    // 如果参数个数大于四个还需要生成 PUSH 指令来传递参数；
+    // 之后生成跳转指令来进入 Callee 函数；
+    // 如果之前通过压栈的方式传递了参数，需要恢复 SP 寄存器；
+    // 最后，如果函数执行结果被用到，还需要保存 R0 寄存器中的返回值。
 }
 
 void ZextInstruction::genMachineCode(AsmBuilder* builder){
-    // TODO
+    // TODO 补零指令，实际上用赋值的mov指令即可
+    auto cur_block = builder->getBlock();
+    auto dst = genMachineOperand(operands[0]);
+    auto src = genMachineOperand(operands[1]);
+    auto cur_inst =new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src);
+    cur_block->InsertInst(cur_inst);
 }
 
 void XorInstruction::genMachineCode(AsmBuilder* builder){
-    // TODO
+    // TODO 异或运算，主要是在非运算时涉及到的int->bool 
+    // 与0作比较，相等为1,不等为0（直接进行了非运算）
+    auto cur_block = builder->getBlock();
+    auto dst = genMachineOperand(operands[0]);
+    auto src = genMachineImm(1);
+    auto cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src, MachineInstruction::EQ);
+    cur_block->InsertInst(cur_inst);
+    src=genMachineImm(0);
+    cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst, src, MachineInstruction::NE);
+    cur_block->InsertInst(cur_inst);
 }
 
 void GlobalInstruction::genMachineCode(AsmBuilder* builder){
