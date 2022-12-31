@@ -141,7 +141,9 @@ class StackMInstrcuton : public MachineInstruction
 public:
     enum opType { PUSH, POP };
     StackMInstrcuton(MachineBlock* p, int op, 
-                MachineOperand* src,
+                std::vector<MachineOperand*> regs,
+                MachineOperand* src1,
+                MachineOperand* src2=nullptr,
                 int cond = MachineInstruction::NONE);
     void output();
 };

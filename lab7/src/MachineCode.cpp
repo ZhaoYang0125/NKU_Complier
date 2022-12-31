@@ -97,26 +97,26 @@ void MachineInstruction::PrintCond()
     // TODO
     switch (cond)
     {
-    case LT:
-        fprintf(yyout, "lt");
-        break;
-    case GT:
-        fprintf(yyout, "gt");
-        break;
-    case LE:
-        fprintf(yyout, "le");
-        break;
-    case GE:
-        fprintf(yyout, "ge");
-        break;
-    case EQ:
-        fprintf(yyout, "eq");
-        break;
-    case NE:
-        fprintf(yyout, "ne");
-        break;
-    default:
-        break;
+        case LT:
+            fprintf(yyout, "lt");
+            break;
+        case GT:
+            fprintf(yyout, "gt");
+            break;
+        case EQ:
+            fprintf(yyout, "eq");
+            break;
+        case NE:
+            fprintf(yyout, "ne");
+            break;
+        case LE:
+            fprintf(yyout, "le");
+            break;
+        case GE:
+            fprintf(yyout, "ge");
+            break;
+        default:
+            break;
     }
 }
 
@@ -145,19 +145,32 @@ void BinaryMInstruction::output()
     {
     case BinaryMInstruction::ADD:
         fprintf(yyout, "\tadd ");
-        this->PrintCond();
-        this->def_list[0]->output();
-        fprintf(yyout, ", ");
-        this->use_list[0]->output();
-        fprintf(yyout, ", ");
-        this->use_list[1]->output();
-        fprintf(yyout, "\n");
         break;
     case BinaryMInstruction::SUB:
+        fprintf(yyout, "\tsub ");
+        break;
+    case BinaryMInstruction::AND:
+        fprintf(yyout, "\tand ");
+        break;
+    case BinaryMInstruction::OR:
+        fprintf(yyout, "\torr ");
+        break;
+    case BinaryMInstruction::MUL:
+        fprintf(yyout, "\tmul ");
+        break;
+    case BinaryMInstruction::DIV:
+        fprintf(yyout, "\tsdiv ");
         break;
     default:
         break;
     }
+    this->PrintCond();
+    this->def_list[0]->output();
+    fprintf(yyout, ", ");
+    this->use_list[0]->output();
+    fprintf(yyout, ", ");
+    this->use_list[1]->output();
+    fprintf(yyout, "\n");
 }
 
 LoadMInstruction::LoadMInstruction(MachineBlock* p,
@@ -212,11 +225,37 @@ StoreMInstruction::StoreMInstruction(MachineBlock* p,
     int cond)
 {
     // TODO
+    this->parent = p;
+    this->type = MachineInstruction::STORE;
+    this->op = -1;
+    this->cond = cond;
+    this->use_list.push_back(src1);
+    this->use_list.push_back(src2);
+    if (src3)
+        this->use_list.push_back(src3);
+    src1->setParent(this);
+    src2->setParent(this);
+    if (src3)
+        src3->setParent(this);
 }
 
 void StoreMInstruction::output()
 {
     // TODO
+    fprintf(yyout, "\tstr ");
+    this->use_list[0]->output();
+    fprintf(yyout, ", ");
+    // store address
+    if (this->use_list[1]->isReg() || this->use_list[1]->isVReg())
+        fprintf(yyout, "[");
+    this->use_list[1]->output();
+    if (this->use_list.size() > 2) {
+        fprintf(yyout, ", ");
+        this->use_list[2]->output();
+    }
+    if (this->use_list[1]->isReg() || this->use_list[1]->isVReg())
+        fprintf(yyout, "]");
+    fprintf(yyout, "\n");
 }
 
 MovMInstruction::MovMInstruction(MachineBlock* p, int op, 
@@ -248,7 +287,8 @@ void MovMInstruction::output()
 }
 
 BranchMInstruction::BranchMInstruction(MachineBlock* p, int op, 
-    MachineOperand* dst, int cond)
+    MachineOperand* dst, 
+    int cond)
 {
     // TODO
     this->parent = p;
@@ -262,8 +302,7 @@ BranchMInstruction::BranchMInstruction(MachineBlock* p, int op,
 void BranchMInstruction::output()
 {
     // TODO
-    switch (op) 
-    {
+    switch (op) {
         case B:
             fprintf(yyout, "\tb");
             break;
@@ -287,6 +326,14 @@ CmpMInstruction::CmpMInstruction(MachineBlock* p,
     int cond)
 {
     // TODO
+    this->parent = p;
+    this->type = MachineInstruction::CMP;
+    this->op = -1;
+    this->cond = cond;
+    this->use_list.push_back(src1);
+    this->use_list.push_back(src2);
+    src1->setParent(this);
+    src2->setParent(this);
 }
 
 void CmpMInstruction::output()
@@ -294,18 +341,60 @@ void CmpMInstruction::output()
     // TODO
     // Jsut for reg alloca test
     // delete it after test
+    fprintf(yyout, "\tcmp ");
+    this->use_list[0]->output();
+    fprintf(yyout, ", ");
+    this->use_list[1]->output();
+    fprintf(yyout, "\n");
 }
 
 StackMInstrcuton::StackMInstrcuton(MachineBlock* p, int op, 
-    MachineOperand* src,
+    std::vector<MachineOperand*> regs,
+    MachineOperand* src1,
+    MachineOperand* src2,
     int cond)
 {
     // TODO
+    this->parent=p;
+    this->op=op;
+    this->cond=cond;
+    this->type=MachineInstruction::STACK;
+    if(regs.size()!=0){
+        for(auto reg:regs){
+            this->addUse(reg);
+        }
+    }
+    if (src1 != nullptr) 
+    {
+        this->use_list.push_back(src1);
+        src1->setParent(this);
+    }
+    if (src2 != nullptr) 
+    {
+        this->use_list.push_back(src2);
+        src2->setParent(this);
+    }
 }
 
 void StackMInstrcuton::output()
 {
     // TODO
+    switch (op) 
+    {
+        case PUSH:
+            fprintf(yyout, "\tpush ");
+            break;
+        case POP:
+            fprintf(yyout, "\tpop ");
+            break;
+    }
+    fprintf(yyout, "{");
+    this->use_list[0]->output();
+    for(long unsigned int i=1;i<use_list.size();i++){
+        fprintf(yyout, ", ");
+        this->use_list[i]->output();
+    }
+    fprintf(yyout, "}\n");
 }
 
 MachineFunction::MachineFunction(MachineUnit* p, SymbolEntry* sym_ptr) 

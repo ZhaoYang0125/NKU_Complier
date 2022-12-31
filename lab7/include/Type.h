@@ -17,6 +17,7 @@ public:
     bool isVoid() const {return kind == VOID;};
     bool isFunc() const {return kind == FUNC;};
     bool isBool() const {return kind == BOOL;};
+    bool isPtr() const {return kind == PTR;};
     bool equal(Type *t) { return this->kind == t->kind;}
 };
 
