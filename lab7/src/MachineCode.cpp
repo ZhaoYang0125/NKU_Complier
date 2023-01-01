@@ -1,4 +1,5 @@
 #include "MachineCode.h"
+#include"Type.h"
 extern FILE* yyout;
 
 MachineOperand::MachineOperand(int tp, int val)
@@ -410,10 +411,20 @@ void MachineBlock::output()
     for(auto iter : inst_list)
         iter->output();
 }
+//获得整数vector代表的寄存器信息
+std::vector<MachineOperand*> MachineFunction::getSavedRegs() 
+{
+    std::vector<MachineOperand*> regs;
+    for (auto i: saved_regs) {
+        MachineOperand * reg = new MachineOperand(MachineOperand::REG, i);
+        regs.push_back(reg);
+    }
+    return regs;
+}
 
 void MachineFunction::output()
 {
-    const char *func_name = this->sym_ptr->toStr().c_str() + 1;
+    const char *func_name = this->sym_ptr->toStr().c_str();
     fprintf(yyout, "\t.global %s\n", func_name);
     fprintf(yyout, "\t.type %s , %%function\n", func_name);
     fprintf(yyout, "%s:\n", func_name);
@@ -425,14 +436,59 @@ void MachineFunction::output()
     *  4. Allocate stack space for local variable */
     
     // Traverse all the block in block_list to print assembly code.
+    MachineOperand *fp = new MachineOperand(MachineOperand::REG, 11);
+    MachineOperand *sp = new MachineOperand(MachineOperand::REG, 13);
+    MachineOperand *lr = new MachineOperand(MachineOperand::REG, 14);
+    MachineInstruction* cur_inst;
+    cur_inst=new StackMInstrcuton(nullptr,StackMInstrcuton::PUSH,this->getSavedRegs(),fp,lr);
+    cur_inst->output();
+    cur_inst=new MovMInstruction(nullptr, MovMInstruction::MOV, fp, sp);
+    cur_inst->output();
+    cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, new MachineOperand(MachineOperand::IMM, AllocSpace(0)));
+    cur_inst->output();
     for(auto iter : block_list)
         iter->output();
+    fprintf(yyout, "\n");
 }
 
 void MachineUnit::PrintGlobalDecl()
 {
     // TODO:
     // You need to print global variable/const declarition code;
+    if(!global_list.empty()){
+        fprintf(yyout,"\t.data\n");
+    }
+    std::vector<IdentifierSymbolEntry*> constGlobal_list;
+    for(auto global:global_list){
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global;
+        if(se->getConst()){//constId
+            constGlobal_list.push_back(se);
+        }
+        else{//变量
+            fprintf(yyout, ".global %s\n", se->toStr().c_str());
+            fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->size/8);
+            fprintf(yyout, "%s:\n", se->toStr().c_str());
+            fprintf(yyout, "\t.word %d\n", se->getValue());
+        }
+    }
+    if(constGlobal_list.empty()==false){
+        fprintf(yyout, ".section .rodata\n");
+        for(auto con:constGlobal_list){
+            IdentifierSymbolEntry* se=con;
+            fprintf(yyout, ".global %s\n", se->toStr().c_str());
+            fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->size/ 8);
+            fprintf(yyout, "%s:\n", se->toStr().c_str());
+            fprintf(yyout, "\t.word %d\n", se->getValue());
+        }
+    }
+}
+
+void MachineUnit::PrintGlobal(){
+    for (auto s : global_list) {
+        IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)s;
+        fprintf(yyout, "addr_%s:\n", se->toStr().c_str());
+        fprintf(yyout, "\t.word %s\n", se->toStr().c_str());
+    }
 }
 
 void MachineUnit::output()
@@ -446,6 +502,8 @@ void MachineUnit::output()
     fprintf(yyout, "\t.arch_extension crc\n");
     fprintf(yyout, "\t.arm\n");
     PrintGlobalDecl();
+    fprintf(yyout, "\t.text\n");
     for(auto iter : func_list)
         iter->output();
+    PrintGlobal();
 }

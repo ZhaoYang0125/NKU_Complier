@@ -99,6 +99,7 @@ public:
     // You can add any function you need here.
     bool inited;
     void setConst();
+    bool getConst(){return constant;};
     int getValue();
     bool setValue(int value);
 };

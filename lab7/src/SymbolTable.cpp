@@ -60,7 +60,7 @@ int IdentifierSymbolEntry::getValue()
 
 std::string IdentifierSymbolEntry::toStr()
 {
-    return "@" + name;
+    return name;
 }
 
 //

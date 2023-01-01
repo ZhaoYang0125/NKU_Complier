@@ -10,7 +10,8 @@ private:
 protected:
     enum {INT, VOID, FUNC, PTR, BOOL};
 public:
-    Type(int kind) : kind(kind) {};
+    int size;
+    Type(int kind,int size) : kind(kind) ,size(size){};
     virtual ~Type() {};
     virtual std::string toStr() = 0;
     bool isInt() const {return kind == INT;};
@@ -24,9 +25,9 @@ public:
 class IntType : public Type
 {
 private:
-    int size;
+    //int size;
 public:
-    IntType(int size) : Type(Type::INT), size(size){};
+    IntType(int size) : Type(Type::INT,size){};
     std::string toStr();
     int getSize(){ return size;}
 };
@@ -34,7 +35,7 @@ public:
 class VoidType : public Type
 {
 public:
-    VoidType() : Type(Type::VOID){};
+    VoidType() : Type(Type::VOID,0){};
     std::string toStr();
 };
 
@@ -45,7 +46,7 @@ private:
 public:
     std::vector<Type*> paramsType;
     FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
-    Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
+    Type(Type::FUNC,0), returnType(returnType), paramsType(paramsType){};
     Type* getRetType() {return returnType;};
     std::string toStr();
 };
@@ -55,7 +56,7 @@ class PointerType : public Type
 private:
     Type *valueType;
 public:
-    PointerType(Type* valueType) : Type(Type::PTR) {this->valueType = valueType;};
+    PointerType(Type* valueType) : Type(Type::PTR,0) {this->valueType = valueType;};
     std::string toStr();
 };
 

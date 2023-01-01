@@ -6,6 +6,8 @@
 #include <string>
 #include "Type.h"
 
+extern Unit unit;
+extern MachineUnit mUnit;
 extern FILE *yyout;
 int Node::counter = 0;
 IRBuilder *Node::builder = nullptr;
@@ -374,11 +376,14 @@ void DeclStmt::genCode()
             addr_se->setType(new PointerType(se->getType()));
             addr = new Operand(addr_se);
             se->setAddr(addr);
+            mUnit.InsertGlobal(se);
             //判断变量是否直接赋值
             Operand *src;
             if(ids->assignlist.size()>0&&ids->assignlist[j]){//如果有预先赋值
                 //std::cout<<"i"<<std::endl;
                 //获取赋的值
+                //se->setValue(ids->assignlist[j])
+                //std::cout<<ids->assignlist[j]->expr->getSymPtr()->toStr()<<std::endl;
                 AssignStmt* assign=ids->assignlist[j];
                 assign -> genCode();
                 src = assign-> expr -> getOperand();
@@ -1013,4 +1018,29 @@ void BreakStmt::output(int level)
 void ContinueStmt::output(int level)
 {
     fprintf(yyout, "%*cContinueStmt\n", level, ' ');
+}
+
+int UnaryExpr::getValue(){
+    // lab7todo
+    return 0;
+}
+
+int CallExpr::getValue(){
+    // lab7todo
+    return 0;
+}
+
+int BinaryExpr::getValue(){
+    // lab7todo
+    return 0;
+}
+
+int Constant::getValue() {
+    return ((ConstantSymbolEntry*)symbolEntry)->getValue();
+
+}
+
+int Id::getValue() 
+{
+    return ((IdentifierSymbolEntry*)symbolEntry)->getValue();
 }

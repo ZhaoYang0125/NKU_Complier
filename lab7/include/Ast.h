@@ -50,6 +50,7 @@ public:
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
     Type* getType() { return type; };
+    virtual int getValue()=0;
     // int类型转化为bool型 /*retodo*/
     void int2Bool(){
         symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
@@ -65,7 +66,7 @@ private:
 public:
     enum {ADD, SUB, NOT};
     UnaryExpr(SymbolEntry *se, int op, ExprNode* expr) : ExprNode(se), op(op), expr(expr){};
-
+    int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
@@ -77,7 +78,7 @@ private:
     ExprNode* param;
 public:
     CallExpr(SymbolEntry* se, ExprNode* param=NULL);
-    
+    int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
@@ -91,7 +92,7 @@ private:
 public:
     enum {ADD, SUB, MUL, DIV, MOD, AND, OR, LESS, GREATER, LESSEQUAL, GREATEREQUAL, EQUAL, NOTEQUAL};
     BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){}; // new dst
-
+    int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
@@ -101,7 +102,7 @@ class Constant : public ExprNode
 {
 public:
     Constant(SymbolEntry *se) : ExprNode(se){dst = new Operand(se);};
-
+    int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
@@ -111,7 +112,7 @@ class Id : public ExprNode
 {
 public:
     Id(SymbolEntry *se) : ExprNode(se){SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
-
+    int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();

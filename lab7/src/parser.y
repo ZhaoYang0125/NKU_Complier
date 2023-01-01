@@ -360,6 +360,7 @@ VarDef
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
+        ((IdentifierSymbolEntry*)se)->setValue($3->getValue());
         bool a=false;
         if(!identifiers->lookup($1)){
             identifiers->install($1, se);
@@ -409,6 +410,7 @@ ConstDef
         IdentifierSymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         se->setConst();
+        ((IdentifierSymbolEntry*)se)->setValue($3->getValue());
         identifiers->install($1, se);
         tem->idlist.push_back(new Id(se));
         tem->assignlist.push_back(new AssignStmt(new Id(se),$3));

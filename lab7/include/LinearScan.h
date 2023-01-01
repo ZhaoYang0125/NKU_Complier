@@ -32,7 +32,9 @@ private:
     std::vector<int> regs;
     std::map<MachineOperand *, std::set<MachineOperand *>> du_chains;
     std::vector<Interval*> intervals;
+    std::vector<Interval*> actives; /* 表示当前正在占用物理寄存器的活跃区间集合 */
     static bool compareStart(Interval*a, Interval*b);
+    static bool compareEnd(Interval*a, Interval*b); /* 用于按照结束位置进行递增排序 */
     void expireOldIntervals(Interval *interval);
     void spillAtInterval(Interval *interval);
     void makeDuChains();
