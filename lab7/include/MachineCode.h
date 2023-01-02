@@ -171,6 +171,7 @@ public:
     std::vector<MachineBlock*>& getPreds() {return pred;};
     std::vector<MachineBlock*>& getSuccs() {return succ;};
     void output();
+    MachineFunction* getParent() { return parent;}
 };
 
 class MachineFunction

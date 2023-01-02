@@ -523,8 +523,8 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
     }
 
     // store global operand
-    if(operands[1]->getEntry()->isVariable()
-    && dynamic_cast<IdentifierSymbolEntry*>(operands[1]->getEntry())->isGlobal())
+    if(operands[0]->getEntry()->isVariable()
+    && dynamic_cast<IdentifierSymbolEntry*>(operands[0]->getEntry())->isGlobal())
     {
         MachineOperand* internal_reg1 = genMachineVReg();
         // store r1, [r0]
@@ -534,16 +534,23 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         cur_block->InsertInst(cur_inst);
     }
     // store local operand
-    else if(operands[1]->getEntry()->isTemporary()
-    && operands[1]->getDef()
-    && operands[1]->getDef()->isAlloc())
+    else if(operands[0]->getEntry()->isTemporary()
+    && operands[0]->getDef()
+    && operands[0]->getDef()->isAlloc())
     {
         // example: store r1, [r0, #4]
-        auto dst = genMachineOperand(operands[0]);
+        //auto dst = genMachineOperand(operands[0]);
         auto src1 = genMachineReg(11);
-        auto src2 = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[1]->getEntry())->getOffset());
-        
-        cur_inst = new LoadMInstruction(cur_block, dst, src1, src2);
+        int offset = dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry()) ->getOffset();
+        auto src2 = genMachineImm(offset);
+        if(abs(offset) > 255)   /* 超出寻址范围 */
+        {
+            /* 先加载到虚拟寄存器 再加载到对应寄存器 */
+            auto operand = genMachineVReg();
+            cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
+            src2 = operand;
+        }
+        cur_inst = new StoreMInstruction(cur_block, src, src1, src2);
         cur_block->InsertInst(cur_inst);
     }
     // store to pointer
@@ -575,6 +582,13 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         cur_block->InsertInst(cur_inst);
         src1 = new MachineOperand(*internal_reg);
     }
+    /*
+    合法立即数：
+        如果一个立即数小于 0xFF（255）那么直接用前 7～0 位表示即可，此时不用移位，11～8 位的 Rotate_imm 等于 0。
+        如果前八位 immed_8 的数值大于 255，那么就看这个数是否能有 immed_8 中的某个数移位 2*Rotate_imm 位形成的。如果能，那么就是合法立即数；否则非法。
+    加载不合法立即数：
+    只要利用LDR伪指令就可以了，加载任意32位立即数,例如:ldr r1, =12345678
+    */
     if (src2->isImm()) {
         auto internal_reg = genMachineVReg();
         cur_inst = new LoadMInstruction(cur_block, internal_reg, src2);

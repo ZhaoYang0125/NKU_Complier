@@ -1022,7 +1022,20 @@ void ContinueStmt::output(int level)
 
 int UnaryExpr::getValue(){
     // lab7todo
-    return 0;
+    int value = 0;
+    switch(op)      /* enum {ADD, SUB, NOT}; */
+    {
+        case ADD:
+            value = expr->getValue();
+            break;
+        case SUB:
+            value = -expr->getValue();
+            break;
+        case NOT:
+            value = !expr->getValue();
+            break;
+    }
+    return value;
 }
 
 int CallExpr::getValue(){
@@ -1032,12 +1045,62 @@ int CallExpr::getValue(){
 
 int BinaryExpr::getValue(){
     // lab7todo
-    return 0;
+    int value=0;
+    int value1=expr1->getValue();
+    int value2=expr2->getValue();
+    /* 
+    enum {ADD, SUB, MUL, DIV, MOD, AND, OR, 
+    LESS, GREATER, LESSEQUAL, GREATEREQUAL, EQUAL, NOTEQUAL}; 
+    */
+    switch(op)
+    {
+        case ADD:
+            value = value1 + value2;
+            break;
+        case SUB:
+            value = value1 - value2;
+            break;
+        case MUL:
+            value = value1 * value2;
+            break;
+        case DIV:
+            if(value2!=0)
+                value = value1 / value2;
+            break;
+        case MOD:
+            value = value1 % value2;
+            break;
+        case AND:
+            value = value1 && value2;
+            break;
+        case OR:
+            value = value1 || value2;
+            break;
+        case LESS:
+            value = value1 < value2;
+            break;
+        case GREATER:
+            value = value1 > value2;
+            break;
+        case LESSEQUAL:
+            value = value1 <= value2;
+            break;
+        case GREATEREQUAL:
+            value = value1 >= value2;
+            break;
+        case EQUAL:
+            value = value1 == value2;
+            break;
+        case NOTEQUAL:
+            value = value1 != value2;
+            break;
+    }
+    return value;
 }
 
-int Constant::getValue() {
+int Constant::getValue() 
+{
     return ((ConstantSymbolEntry*)symbolEntry)->getValue();
-
 }
 
 int Id::getValue() 

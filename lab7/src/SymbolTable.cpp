@@ -1,4 +1,5 @@
 #include "SymbolTable.h"
+#include"Type.h"
 #include <iostream>
 #include <sstream>
 
@@ -60,6 +61,8 @@ int IdentifierSymbolEntry::getValue()
 
 std::string IdentifierSymbolEntry::toStr()
 {
+    if(type->isFunc())
+        return '@'+name;
     return name;
 }
 
