@@ -550,6 +550,7 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
             cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
             src2 = operand;
         }
+        //std::cout<<"???"<<std::endl;
         cur_inst = new StoreMInstruction(cur_block, src, src1, src2);
         cur_block->InsertInst(cur_inst);
     }
@@ -750,6 +751,7 @@ void CondBrInstruction::genMachineCode(AsmBuilder* builder)
     // TODO
     auto cur_block = builder->getBlock();
     MachineOperand* dst = genMachineLabel(true_branch->getNo());
+    //std::cout<<builder->getCmpOpcode()<<std::endl;
     auto cur_inst = new BranchMInstruction(cur_block, BranchMInstruction::B, dst, builder->getCmpOpcode());
     cur_block->InsertInst(cur_inst);
     
@@ -792,7 +794,7 @@ void CallInstruction::genMachineCode(AsmBuilder* builder){
             dst1=genMachineReg(i);
             operand=genMachineOperand(operands[i+1]);
             //判断是否是立即数
-            if (operand->isImm()){
+            if (operand->isImm() && operand->getVal()<255){
                 cur_inst=new LoadMInstruction(cur_block, dst1, operand);
             } 
             else{

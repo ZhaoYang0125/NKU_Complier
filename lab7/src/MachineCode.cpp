@@ -100,6 +100,7 @@ void MachineOperand::output()
 void MachineInstruction::PrintCond()
 {
     // TODO
+    //std::cout<<"cond"<<cond<<std::endl;
     switch (cond)
     {
         case LT:
@@ -296,6 +297,7 @@ BranchMInstruction::BranchMInstruction(MachineBlock* p, int op,
     int cond)
 {
     // TODO
+    //std::cout<<cond<<std::endl;
     this->parent = p;
     this->op = op;
     this->cond = cond;

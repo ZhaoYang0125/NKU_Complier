@@ -222,7 +222,6 @@ void BinaryExpr::genCode()
         case NOTEQUAL:
             cmpcode = CmpInstruction::NE;
             break;
-        
         default:
             break;
         }
@@ -536,8 +535,7 @@ void WhileStmt::genCode()
     end_bb = new BasicBlock(func);
     cond_bb = new BasicBlock(func);
 
-    UncondBrInstruction *temp = new UncondBrInstruction(cond_bb, builder -> getInsertBB());
-    temp -> output();
+    new UncondBrInstruction(cond_bb, builder -> getInsertBB());
     //设置前驱后继
     cond_bb -> addPred(builder -> getInsertBB());
     builder -> getInsertBB() -> addSucc(cond_bb);
@@ -550,7 +548,6 @@ void WhileStmt::genCode()
     cond_bb -> addSucc(end_bb);
 
     builder->setInsertBB(cond_bb);
-
     cond -> genCode();
     Type* t = cond->getSymPtr()->getType();
     if(t->isInt() && ((IntType*) t)->getSize() == 32){
@@ -575,8 +572,7 @@ void WhileStmt::genCode()
     builder -> setInsertBB(loop_bb);
     Stmt -> genCode();
     loop_bb = builder -> getInsertBB();
-    new CondBrInstruction(cond_bb, end_bb, cond->getOperand(), loop_bb);
-
+    new UncondBrInstruction(cond_bb, loop_bb);
     builder->setInsertBB(end_bb);
 }
 
