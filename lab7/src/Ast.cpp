@@ -244,7 +244,112 @@ void Id::genCode()
     //std::cout<<"id"<<std::endl;
     BasicBlock *bb = builder->getInsertBB();
     Operand *addr = dynamic_cast<IdentifierSymbolEntry *>(symbolEntry)->getAddr();
-    new LoadInstruction(dst, addr, bb);
+    if (type->isInt())
+        new LoadInstruction(dst, addr, bb);
+    // 主要思想是多维的 先把上一维度的地址找到 然后根据下标找下一个维度
+    else if(type->isArray())
+    {
+        //遍历维度
+        if (arrIdx) 
+        {
+            //获取当前类型和元素类型
+            Type* type = ((ArrayType*)(this->type))->getElementType();
+            Type* type1 = this->type;
+            
+            Operand* tempSrc = addr;//中间目标地址
+            Operand* tempDst = dst;//中间目标值
+            
+            ExprNode* idx = arrIdx;
+            //标识GepInstruction的paramFirst
+            //主要是用于区分函数参数a[][3]的情况
+            bool flag = false;
+            
+            bool pointer = false;
+            bool firstFlag = true;
+            
+            while (true) 
+            {
+               //针对参数是数组的情况  a[][3]
+               //把基址加载到tempSrc
+                if (((ArrayType*)type1)->getLength() == -1) 
+                {
+                    Operand* dst1 = new Operand(new TemporarySymbolEntry(
+                        new PointerType(type), SymbolTable::getLabel()));
+                    tempSrc = dst1;//中间变量
+                    new LoadInstruction(dst1, addr, bb);
+                    
+                    flag = true;
+                    firstFlag = false;
+                }
+                //如果维度遍历结束 将对应数组值传递到dst 然后退出
+                if (!idx) {
+                    Operand* dst1 = new Operand(new TemporarySymbolEntry(
+                        new PointerType(type), SymbolTable::getLabel()));
+                    Operand* idx = new Operand(
+                        new ConstantSymbolEntry(TypeSystem::intType, 0));
+                    new GepInstruction(dst1, tempSrc, idx, bb);
+                    tempDst = dst1;
+                    pointer = true;
+                    break;
+                }
+                //生成维度
+                idx->genCode();
+                //用于维度寻址 将tempSrc[idx]的值加载到tempDst
+                auto gep = new GepInstruction(tempDst, tempSrc,
+                                              idx->getOperand(), bb, flag);
+                //如果当前不是a[][3]这种情况
+                //并且是第一个维度寻址
+                if (!flag && firstFlag) 
+                {
+                    gep->setFirst();
+                    firstFlag = false;
+                }
+                //flag每个参数都要重置
+                if (flag)
+                    flag = false;
+                //维度要全部换成整数的维度    
+                if (type == TypeSystem::intType)
+                    break;
+                type = ((ArrayType*)type)->getElementType();
+                type1 = ((ArrayType*)type1)->getElementType();
+                tempSrc = tempDst;
+                tempDst = new Operand(new TemporarySymbolEntry(
+                    new PointerType(type), SymbolTable::getLabel()));
+                idx = (ExprNode*)(idx->getNext());
+            }
+            dst = tempDst;
+            
+            // 如果此ID是右值 需要再次load
+            if (!left && !pointer) 
+            {
+                Operand* dst1 = new Operand(new TemporarySymbolEntry(
+                    TypeSystem::intType, SymbolTable::getLabel()));
+                new LoadInstruction(dst1, dst, bb);
+                dst = dst1;
+            }
+            
+        } 
+        //针对声明数组的情况 和上面类似
+        else 
+        {
+            if (((ArrayType*)(this->type))->getLength() == -1) 
+            {
+                Operand* dst1 = new Operand(new TemporarySymbolEntry(
+                    new PointerType(
+                        ((ArrayType*)(this->type))->getElementType()),
+                    SymbolTable::getLabel()));
+                new LoadInstruction(dst1, addr, bb);
+                dst = dst1;
+            } 
+            else 
+            {
+                Operand* idx = new Operand(
+                    new ConstantSymbolEntry(TypeSystem::intType, 0));
+                auto gep = new GepInstruction(dst, addr, idx, bb);
+                gep->setFirst();
+            }
+        }
+    }
 }
 
 void IdList::genCode(){
@@ -431,7 +536,14 @@ void AssignStmt::genCode()
 {
     BasicBlock *bb = builder->getInsertBB();
     expr->genCode();
-    Operand *addr = dynamic_cast<IdentifierSymbolEntry *>(lval->getSymPtr())->getAddr();
+    Operand* addr = nullptr;
+    if (lval->getType()->isInt())
+        addr = dynamic_cast<IdentifierSymbolEntry *>(lval->getSymPtr())->getAddr();
+    else if (lval->getType()->isArray()) {
+        ((Id*)lval)->setLeft();
+        lval->genCode();
+        addr = lval->getOperand();
+    }
     Operand *src = expr->getOperand();
     /***
      * We haven't implemented array yet, the lval can only be ID. So we just store the result of the `expr` to the addr of the id.
@@ -639,7 +751,7 @@ void BinaryExpr::typeCheck(Type* retType)
     expr2->typeCheck(retType);
     Type *type1 = expr1->getSymPtr()->getType();
     Type *type2 = expr2->getSymPtr()->getType();
-
+/*
     if (!type1->equal(type2))
     {
         fprintf(stderr, "类型为 %s 的变量 %s 和类型为 %s 的变量 %s不匹配。\n",
@@ -647,6 +759,7 @@ void BinaryExpr::typeCheck(Type* retType)
                 type2->toStr().c_str(), expr2->getSymPtr()->toStr().c_str());
         exit(EXIT_FAILURE);
     }
+*/
     if(expr1->getType()){
         if(expr1->getType()->isVoid()){
             fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",

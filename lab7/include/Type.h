@@ -8,7 +8,7 @@ class Type
 private:
     int kind;
 protected:
-    enum {INT, VOID, FUNC, PTR, BOOL};
+    enum {INT, VOID, FUNC, PTR, BOOL, ARRAY};
 public:
     int size;
     Type(int kind,int size) : kind(kind) ,size(size){};
@@ -19,17 +19,20 @@ public:
     bool isFunc() const {return kind == FUNC;};
     bool isBool() const {return kind == BOOL;};
     bool isPtr() const {return kind == PTR;};
+    bool isArray() const {return kind == ARRAY;};
     bool equal(Type *t) { return this->kind == t->kind;}
+    int getSize(){ return size;};
 };
 
 class IntType : public Type
 {
 private:
     //int size;
+    bool constant;
 public:
-    IntType(int size) : Type(Type::INT,size){};
+    IntType(int size, bool constant = false) : Type(Type::INT,size), constant(constant){};
     std::string toStr();
-    int getSize(){ return size;}
+    bool isConstant(){ return constant;}
 };
 
 class VoidType : public Type
@@ -58,6 +61,31 @@ private:
 public:
     PointerType(Type* valueType) : Type(Type::PTR,0) {this->valueType = valueType;};
     std::string toStr();
+    Type* getType() const { return valueType; };
+};
+
+class ArrayType : public Type {
+private:
+    Type* elementType;
+    Type* arrayType = nullptr;
+    int length;
+    bool constant;
+
+public:
+    ArrayType(Type* elementType, int length, bool constant = false)
+        : Type(Type::ARRAY, ((IntType*)elementType)->getSize()), 
+        elementType(elementType), 
+        length(length), 
+        constant(constant) 
+    {
+        size = ((IntType*)elementType)->getSize() * length;
+    };
+    std::string toStr();
+    int getLength() const { return length; };
+    Type* getElementType() const { return elementType; };
+    void setArrayType(Type* arrayType) { this->arrayType = arrayType; };
+    bool isConst() const { return constant; };
+    Type* getArrayType() const { return arrayType; };
 };
 
 class TypeSystem

@@ -197,6 +197,16 @@ commentend "*/"
         DEBUG_FOR_LAB4("COMMA\t}");
     return COMMA;
 }
+"[" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("LBRACKET\t[");
+    return LBRACKET;
+}
+"]" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4("RBRACKET\t}");
+    return RBRACKET;
+}
 
 
 

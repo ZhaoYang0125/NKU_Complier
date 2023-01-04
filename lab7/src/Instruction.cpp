@@ -318,7 +318,6 @@ StoreInstruction::StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *
     operands.push_back(src);
     dst_addr->addUse(this);
     src->addUse(this);
-    //std::cout<<"se"<<std::endl;
 }
 
 StoreInstruction::~StoreInstruction()
@@ -418,8 +417,8 @@ MachineOperand* Instruction::genMachineOperand(Operand* ope)
     MachineOperand* mope = nullptr;
     if(se->isConstant())
         mope = new MachineOperand(MachineOperand::IMM, dynamic_cast<ConstantSymbolEntry*>(se)->getValue());
-    else if(se->isTemporary()){
-        mope = new MachineOperand(MachineOperand::VREG, dynamic_cast<TemporarySymbolEntry*>(se)->getLabel());}
+    else if(se->isTemporary())
+        mope = new MachineOperand(MachineOperand::VREG, dynamic_cast<TemporarySymbolEntry*>(se)->getLabel());
     else if(se->isVariable())
     {
         auto id_se = dynamic_cast<IdentifierSymbolEntry*>(se);
@@ -468,7 +467,11 @@ void AllocaInstruction::genMachineCode(AsmBuilder* builder)
     * Allocate stack space for local variabel
     * Store frame offset in symbol entry */
     auto cur_func = builder->getFunction();
-    int offset = cur_func->AllocSpace(4);
+    int size = se->getType()->getSize() / 8;//位数转为字节数
+    //默认4字节
+    if (size <= 0)
+        size = 4;
+    int offset = cur_func->AllocSpace(size);
     dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->setOffset(-offset);
 }
 
@@ -879,4 +882,152 @@ void XorInstruction::genMachineCode(AsmBuilder* builder){
 
 void GlobalInstruction::genMachineCode(AsmBuilder* builder){
     // TODO
+}
+
+//用于数组寻址  
+GepInstruction::GepInstruction(Operand* dst,
+                               Operand* arr,
+                               Operand* idx,
+                               BasicBlock* insert_bb,
+                               bool paramFirst)
+    : Instruction(GEP, insert_bb), paramFirst(paramFirst) 
+{
+    operands.push_back(dst);
+    operands.push_back(arr);
+    operands.push_back(idx);
+    dst->setDef(this);
+    arr->addUse(this);
+    idx->addUse(this);
+    //最终代码生成部分
+    first = false;
+    init = nullptr;
+    last = false;
+}
+
+void GepInstruction::output() const {
+    Operand* dst = operands[0];
+    Operand* arr = operands[1];
+    Operand* idx = operands[2];
+    std::string arrType = arr->getType()->toStr();
+    //是否为函数参数 
+    if (paramFirst)
+        fprintf(yyout, "  %s = getelementptr inbounds %s, %s %s, i32 %s\n",
+                dst->toStr().c_str(),
+                arrType.substr(0, arrType.size() - 1).c_str(), 
+                arrType.c_str(),
+                arr->toStr().c_str(), 
+                idx->toStr().c_str());
+    else
+        fprintf(
+            yyout, "  %s = getelementptr inbounds %s, %s %s, i32 0, i32 %s\n",
+            dst->toStr().c_str(), 
+            arrType.substr(0, arrType.size() - 1).c_str(),
+            arrType.c_str(), 
+            arr->toStr().c_str(), 
+            idx->toStr().c_str());
+}
+
+GepInstruction::~GepInstruction() {
+    operands[0]->setDef(nullptr);
+    if (operands[0]->usersNum() == 0)
+        delete operands[0];
+    operands[1]->removeUse(this);
+    operands[2]->removeUse(this);
+}
+
+void GepInstruction::genMachineCode(AsmBuilder* builder) {
+    auto cur_block = builder->getBlock();
+    MachineInstruction* cur_inst;
+    auto dst = genMachineOperand(operands[0]);
+    auto idx = genMachineOperand(operands[2]);
+    
+    if(init){
+        if(last){//the last dimension
+            auto base = genMachineOperand(init);
+            cur_inst = new BinaryMInstruction(
+                cur_block, BinaryMInstruction::ADD, dst, base, genMachineImm(4));
+            cur_block->InsertInst(cur_inst);
+        }
+        return;
+    }
+    MachineOperand* base = nullptr;
+    int size;
+    auto idx1 = genMachineVReg();
+    if (idx->isImm()) {
+        if (idx->getVal() < 255) {
+            cur_inst =
+                new MovMInstruction(cur_block, MovMInstruction::MOV, idx1, idx);
+        } else {
+            cur_inst = new LoadMInstruction(cur_block, idx1, idx);
+        }
+        idx = new MachineOperand(*idx1);
+        cur_block->InsertInst(cur_inst);
+    }
+    if (paramFirst) {//if the arr is treated as params, need to get it's ptr type.
+        size =
+            ((PointerType*)(operands[1]->getType()))->getType()->getSize() / 8;
+    } else {
+        if (first) {// idx is located in the first param of array.
+            base = genMachineVReg();
+            // z.B. arr[a]...
+            if (operands[1]->getEntry()->isVariable() &&
+                ((IdentifierSymbolEntry*)(operands[1]->getEntry()))
+                    ->isGlobal()) {
+                auto src = genMachineOperand(operands[1]);
+                cur_inst = new LoadMInstruction(cur_block, base, src);
+            } else {//z.B. arr[3]...
+                int offset = ((TemporarySymbolEntry*)(operands[1]->getEntry()))
+                                 ->getOffset();
+                if (abs(offset) < 255) {
+                    cur_inst =
+                        new MovMInstruction(cur_block, MovMInstruction::MOV,
+                                            base, genMachineImm(offset));
+                } else {
+                    cur_inst = new LoadMInstruction(cur_block, base,
+                                                    genMachineImm(offset));
+                }
+            }
+            cur_block->InsertInst(cur_inst);
+        }
+        ArrayType* type =
+            (ArrayType*)(((PointerType*)(operands[1]->getType()))->getType());
+        size = type->getElementType()->getSize() / 8;//get element type
+    }
+    auto size1 = genMachineVReg();
+    if (abs(size) < 255) {
+        cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, size1,
+                                       genMachineImm(size));
+    } else {
+        cur_inst = new LoadMInstruction(cur_block, size1, genMachineImm(size));
+    }
+    cur_block->InsertInst(cur_inst);
+    auto off = genMachineVReg();
+    cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::MUL, off,
+                                      idx, size1);
+    off = new MachineOperand(*off);
+    cur_block->InsertInst(cur_inst);
+    if (paramFirst || !first) {//it is param or not the first dimension.
+        auto arr = genMachineOperand(operands[1]);
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD,
+                                          dst, arr, off);
+        cur_block->InsertInst(cur_inst);
+    } else {//it is in the func body and the 1st dimension.
+        auto addr = genMachineVReg();
+        auto base1 = new MachineOperand(*base);
+        cur_inst = new BinaryMInstruction(cur_block, BinaryMInstruction::ADD,
+                                          addr, base1, off);
+        cur_block->InsertInst(cur_inst);
+        addr = new MachineOperand(*addr);
+        //z.B. arr[a]
+        if (operands[1]->getEntry()->isVariable() &&
+            ((IdentifierSymbolEntry*)(operands[1]->getEntry()))->isGlobal()) {
+            cur_inst =
+                new MovMInstruction(cur_block, MovMInstruction::MOV, dst, addr);//dst=addr
+        } else {//z.B. arr[4]
+            auto fp = genMachineReg(11);
+            cur_inst = new BinaryMInstruction(
+                cur_block, BinaryMInstruction::ADD, dst, fp, addr);//dst=fp+addr
+        }
+        cur_block->InsertInst(cur_inst);
+    }
 }

@@ -37,7 +37,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, GLOBAL,CALL, ZEXT, XOR};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, GLOBAL,CALL, ZEXT, XOR, GEP};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -164,22 +164,46 @@ protected:
     Operand* dst;
 };
 
- //零扩展转换
- class ZextInstruction:public Instruction
- {
- public:
+//零扩展转换
+class ZextInstruction:public Instruction
+{
+    public:
     ZextInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
     void output() const;
     void genMachineCode(AsmBuilder*);
- };
+};
 
 //异或
 class XorInstruction:public Instruction
- {
- public:
+{
+    public:
     XorInstruction(Operand* dst,Operand* src,BasicBlock *insert_bb = nullptr);
     void output() const;
     void genMachineCode(AsmBuilder*);
- };
+};
  
+// 数组寻址
+
+class GepInstruction : public Instruction 
+{
+private:
+    bool paramFirst;
+    bool first;
+    bool last;
+    Operand* init;
+
+public:
+    GepInstruction(Operand* dst,
+                   Operand* arr,
+                   Operand* idx,
+                   BasicBlock* insert_bb = nullptr,
+                   bool paramFirst = false);
+    ~GepInstruction();
+    void output() const;
+    void genMachineCode(AsmBuilder*);
+    void setFirst() { first = true; };
+    void setLast() { last = true; };
+    Operand* getInit() const { return init; };
+    void setInit(Operand* init) { this->init = init; };
+};
 #endif

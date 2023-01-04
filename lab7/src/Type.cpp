@@ -34,3 +34,9 @@ std::string PointerType::toStr()
     buffer << valueType->toStr() << "*";
     return buffer.str();
 }
+
+std::string ArrayType::toStr() 
+{
+    // 数组类型中间代码, 生成目标代码不用
+    return NULL;
+}

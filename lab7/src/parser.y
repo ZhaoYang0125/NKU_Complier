@@ -7,6 +7,7 @@
     int yyerror( char const * );
     Type* declType;
     int paramCount=0;
+    ArrayType* arrayType;
 }
 
 %code requires {
@@ -34,6 +35,7 @@
 %token ADD SUB MUL DIV MOD OR AND NOT LESS GREATER LESSEQUAL GREATEREQUAL EQUAL NOTEQUAL ASSIGN
 %token RETURN
 %token CONST
+%token LBRACKET RBRACKET
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt IfStmt WhileStmt ReturnStmt DeclStmt VarDeclStmt VarDef ConstDeclStmt ConstDef FuncDef
 %nterm <stmttype> ExprStmt BlankStmt VarDefList ConstDefList
@@ -41,6 +43,7 @@
 %nterm <stmttype> FuncFParam FuncFParams
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
+%nterm <exprtype> ArrayIndices
 %nterm <type> Type
 
 %precedence THEN
@@ -81,6 +84,18 @@ LVal
             assert(se != nullptr);
         }
         $$ = new Id(se);
+        delete []$1;
+    }
+    | ID ArrayIndices{
+        SymbolEntry* se;
+        se = identifiers->lookup($1);
+        if(se == nullptr)
+        {
+            fprintf(stderr, "identifier \"%s\" is undefined\n", (char*)$1);
+            delete [](char*)$1;
+            assert(se != nullptr);
+        }
+        $$ = new Id(se, $2);
         delete []$1;
     }
     ;
@@ -327,6 +342,15 @@ FuncRParams
         $$ = $1;
     }
     ;
+ArrayIndices
+    : LBRACKET Exp RBRACKET {
+        $$ = $2;
+    }
+    | ArrayIndices LBRACKET Exp RBRACKET {
+        $$ = $1;
+        $1->setNext($3);    // 多维
+    }
+    ;
 DeclStmt
     : VarDeclStmt { $$ = $1; }
     | ConstDeclStmt { $$ = $1; }
@@ -355,7 +379,7 @@ VarDef
         delete []$1;
     }
     |
-     ID ASSIGN Exp {
+    ID ASSIGN Exp {
         std::vector<Id*> idlist;
         std::vector<AssignStmt*> assignlist;
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
@@ -379,8 +403,56 @@ VarDef
         $$=(StmtNode*)tem;
         //$$ = new Id(se);
         delete []$1;
-     }
-     ;
+    }
+    |
+    ID ArrayIndices {
+        std::vector<int> vec;   //分别存放维度值
+        ExprNode* temp = $2;
+        // 保存数组维度，从高维到低维
+        while(temp){
+            vec.push_back(temp->getValue());
+            temp = (ExprNode*)(temp->getNext());
+        }
+
+        Type *type = declType;
+        Type* temp1;
+        while(!vec.empty()){
+        //嵌套数组类型
+            temp1 = new ArrayType(type, vec.back());
+            //考虑多维数组 每个元素是数组指针
+            //如果元素是数组 type设置为数组维度
+            if(type->isArray())
+                ((ArrayType*)type)->setArrayType(temp1);
+            type = temp1;
+            vec.pop_back();
+        }
+        // 保存最低维数据类型
+        arrayType = (ArrayType*)type;
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
+ 
+        ((IdentifierSymbolEntry*)se)->setAllZero(); //  初始化为0
+        int *p = new int[type->getSize()];  // 开辟数组空间
+        ((IdentifierSymbolEntry*)se)->setArrayValue(p);
+
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist); // 标识符列表
+        if(!identifiers->lookup($1)){
+            identifiers->install($1, se);
+        }
+        else{
+            fprintf(stderr,"identifier %s is redefined\n",(char*)$1);
+            delete [](char*)$1;
+        }
+        tem->idlist.push_back(new Id(se));
+        /* 插入一条nullptr，让idlist和assignlist对齐，暂时行得通 */
+        tem->assignlist.push_back(nullptr);
+ 
+        $$=(StmtNode*)tem;
+        delete []$1;
+    }
+    ;
 VarDefList
     :
     VarDefList COMMA VarDef {

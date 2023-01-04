@@ -110,12 +110,33 @@ public:
 
 class Id : public ExprNode
 {
+private:
+    ExprNode* arrIdx;
+    bool left = false;
 public:
-    Id(SymbolEntry *se) : ExprNode(se){SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    Id(SymbolEntry *se, ExprNode* arrIdx = nullptr) : ExprNode(se), arrIdx(arrIdx)
+    {
+        type = se->getType();
+        if(se->getType()->isArray())
+        {
+            SymbolEntry* temp = new TemporarySymbolEntry(
+                new PointerType(((ArrayType*)se->getType())->getElementType()), SymbolTable::getLabel());
+            dst = new Operand(temp);
+        }
+        else
+        {
+            SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel());
+            dst = new Operand(temp);
+        }
+    };
     int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
+    // 数组相关
+    ExprNode* getArrIdx() { return arrIdx; };
+    bool isLeft() const { return left; };
+    void setLeft() { left = true; }
 };
 
 class StmtNode : public Node
