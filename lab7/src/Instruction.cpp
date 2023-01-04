@@ -318,6 +318,7 @@ StoreInstruction::StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *
     operands.push_back(src);
     dst_addr->addUse(this);
     src->addUse(this);
+    //std::cout<<"se"<<std::endl;
 }
 
 StoreInstruction::~StoreInstruction()
@@ -417,13 +418,21 @@ MachineOperand* Instruction::genMachineOperand(Operand* ope)
     MachineOperand* mope = nullptr;
     if(se->isConstant())
         mope = new MachineOperand(MachineOperand::IMM, dynamic_cast<ConstantSymbolEntry*>(se)->getValue());
-    else if(se->isTemporary())
-        mope = new MachineOperand(MachineOperand::VREG, dynamic_cast<TemporarySymbolEntry*>(se)->getLabel());
+    else if(se->isTemporary()){
+        mope = new MachineOperand(MachineOperand::VREG, dynamic_cast<TemporarySymbolEntry*>(se)->getLabel());}
     else if(se->isVariable())
     {
         auto id_se = dynamic_cast<IdentifierSymbolEntry*>(se);
         if(id_se->isGlobal())
             mope = new MachineOperand(id_se->toStr().c_str());
+        else if(id_se->isParam()){
+            if (id_se -> getParamNo() < 4){
+                mope = new MachineOperand(MachineOperand::REG, id_se -> getParamNo());
+            }
+            else{
+                mope = new MachineOperand(MachineOperand::REG, 3);
+            }
+        }
         else
             exit(0);
     }
@@ -543,13 +552,13 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         auto src1 = genMachineReg(11);
         int offset = dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry()) ->getOffset();
         auto src2 = genMachineImm(offset);
-        if(abs(offset) > 255)   /* 超出寻址范围 */
-        {
-            /* 先加载到虚拟寄存器 再加载到对应寄存器 */
-            auto operand = genMachineVReg();
-            cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
-            src2 = operand;
-        }
+        // if(abs(offset) > 255)   /* 超出寻址范围 */
+        // {
+        //     /* 先加载到虚拟寄存器 再加载到对应寄存器 */
+        //     auto operand = genMachineVReg();
+        //     cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
+        //     src2 = operand;
+        // }
         //std::cout<<"???"<<std::endl;
         cur_inst = new StoreMInstruction(cur_block, src, src1, src2);
         cur_block->InsertInst(cur_inst);

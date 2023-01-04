@@ -82,28 +82,24 @@ void FunctionDef::genCode()
     if(ids!=nullptr)
     for(unsigned long int j=0;j<ids->idlist.size();j++){
         IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
+        //std::cout<<se->getScope()<<std::endl;
         Function *func = builder->getInsertBB()->getParent();
         BasicBlock *entry = func->getEntry();
-        Instruction *alloca;
         Operand *addr;
         SymbolEntry *addr_se;
         Type *type;
         type = new PointerType(se->getType());
         addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());//临时符号表
         addr = new Operand(addr_se);
-        
-        Type *type2 = new IntType(32);
-        SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
-        Operand *addr2 = new Operand(addr_se2);
-
-        
-        alloca = new AllocaInstruction(addr, se); // alloca指令
+        Instruction *alloca = new AllocaInstruction(addr, se); // alloca指令
         entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
         
+        Operand *addr2 = new Operand(ids->idlist[j]->getSymPtr());
 
-        StoreInstruction *store = new StoreInstruction(addr, addr2);
-        entry -> insertBack(store);
+        StoreInstruction *store = new StoreInstruction(addr, addr2,builder->getInsertBB());
         se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+        
+        entry -> insertBack(store);
         func->params.push_back(addr2); 
     }
 

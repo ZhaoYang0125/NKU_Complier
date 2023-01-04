@@ -6,6 +6,7 @@
     int yylex();
     int yyerror( char const * );
     Type* declType;
+    int paramCount=0;
 }
 
 %code requires {
@@ -463,18 +464,8 @@ FuncFParam
         std::vector<AssignStmt*> assignlist;
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         SymbolEntry* se;
-        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel());
-        // bool a=false;
-        // if(!identifiers->lookup($2)){
+        se = new IdentifierSymbolEntry($1, $2, identifiers->getLevel(),paramCount++);
         identifiers->install($2, se);
-        //     a=false;    
-        // }
-        // else{
-        //     a=true;
-        //     fprintf(stderr,"identifier %s is redefined\n",(char*)$2);
-        //     delete [](char*)$2;
-        //     assert(!a);
-        // }
         tem->idlist.push_back(new Id(se));
         $$=(StmtNode*)tem;
         delete []$2;
@@ -527,6 +518,7 @@ FuncDef
             delete [](char*)$2;
             assert(!a);
         }
+        paramCount=0;
         identifiers = new SymbolTable(identifiers);
     }
     FuncFParams {
