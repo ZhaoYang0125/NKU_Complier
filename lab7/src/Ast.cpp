@@ -749,17 +749,16 @@ void BinaryExpr::typeCheck(Type* retType)
     // Todo
     expr1->typeCheck(retType);
     expr2->typeCheck(retType);
-    Type *type1 = expr1->getSymPtr()->getType();
-    Type *type2 = expr2->getSymPtr()->getType();
-/*
-    if (!type1->equal(type2))
-    {
-        fprintf(stderr, "类型为 %s 的变量 %s 和类型为 %s 的变量 %s不匹配。\n",
-                type1->toStr().c_str(), expr1->getSymPtr()->toStr().c_str(),
-                type2->toStr().c_str(), expr2->getSymPtr()->toStr().c_str());
-        exit(EXIT_FAILURE);
-    }
-*/
+     Type *type1 = expr1->getSymPtr()->getType();
+    // Type *type2 = expr2->getSymPtr()->getType();
+
+    // if (!type1->equal(type2))
+    // {
+    //     fprintf(stderr, "类型为 %s 的变量 %s 和类型为 %s 的变量 %s不匹配。\n",
+    //             type1->toStr().c_str(), expr1->getSymPtr()->toStr().c_str(),
+    //             type2->toStr().c_str(), expr2->getSymPtr()->toStr().c_str());
+    //     exit(EXIT_FAILURE);
+    // }
     if(expr1->getType()){
         if(expr1->getType()->isVoid()){
             fprintf(stderr, "类型为空的表达式 %s 不能进行运算。\n",

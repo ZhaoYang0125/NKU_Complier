@@ -364,7 +364,7 @@ VarDef
         SymbolEntry* se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         bool a=false;
-        if(!identifiers->lookup($1)){
+        if(!identifiers->lookup_cur_block($1)){
             identifiers->install($1, se);
             a=false;    
         }
@@ -387,7 +387,7 @@ VarDef
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());
         ((IdentifierSymbolEntry*)se)->setValue($3->getValue());
         bool a=false;
-        if(!identifiers->lookup($1)){
+        if(!identifiers->lookup_cur_block($1)){
             identifiers->install($1, se);
             a=false;    
         }

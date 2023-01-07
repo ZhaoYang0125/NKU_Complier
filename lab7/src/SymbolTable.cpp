@@ -123,6 +123,25 @@ SymbolEntry* SymbolTable::lookup(std::string name)
         else
         {
             table=table->prev;
+            //return nullptr;
+        }
+    }
+    return nullptr;
+}
+
+SymbolEntry* SymbolTable::lookup_cur_block(std::string name)
+{
+    SymbolTable* table = this;
+    while(table!=nullptr)
+    {
+        if(table->symbolTable.find(name)!=table->symbolTable.end())
+        {
+            return table->symbolTable[name];
+        }
+        else
+        {
+            //table=table->prev;
+            return nullptr;
         }
     }
     return nullptr;

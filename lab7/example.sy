@@ -1,14 +1,8 @@
+//test domain of global var define and local define
+int a = 3;
+int b = 5;
 
-int main() {
-  int arr[100];
-  int i = 0, sum = 0;
-  while (getint()) {
-  	arr[i] = getint();
-    i = i + 1;
-  }
-	while (i) {
-    i = i - 1;
-    sum = sum + arr[i];
-  }
-  return sum % 79;
+int main(){
+    int a = 5;
+    return a + b;
 }
