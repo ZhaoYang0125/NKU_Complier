@@ -84,6 +84,18 @@ public:
     void genCode();
 };
 
+class Int2BoolExpr:public ExprNode
+{
+private:
+    ExprNode* expr;
+public:
+    Int2BoolExpr(ExprNode* expr);
+    int getValue(){return expr->getValue();};
+    void output(int level){};
+    void typeCheck(Type* retType=nullptr){};
+    void genCode();
+};
+
 class BinaryExpr : public ExprNode
 {
 private:
@@ -91,7 +103,25 @@ private:
     ExprNode *expr1, *expr2;
 public:
     enum {ADD, SUB, MUL, DIV, MOD, AND, OR, LESS, GREATER, LESSEQUAL, GREATEREQUAL, EQUAL, NOTEQUAL};
-    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){}; // new dst
+    BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){
+        if (op >= BinaryExpr::AND && op <= BinaryExpr::NOTEQUAL) 
+        {//判断是否为整数
+            this->type = TypeSystem::boolType;
+            if (op == BinaryExpr::AND || op == BinaryExpr::OR) {
+                if (expr1->getType()->isInt() && expr1->getType()->getSize() == 32){
+                    Int2BoolExpr* temp = new Int2BoolExpr(expr1);
+                    this->expr1 = temp;
+                }
+                if (expr2->getType()->isInt() && expr2->getType()->getSize() == 32){
+                    Int2BoolExpr* temp = new Int2BoolExpr(expr2);
+                    this->expr2 = temp;
+                }
+            }
+        } 
+        else{
+            type = TypeSystem::intType;
+        }
+    }; // new dst
     int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
@@ -237,7 +267,7 @@ private:
     ExprNode *cond;
     StmtNode *thenStmt;
 public:
-    IfStmt(ExprNode *cond, StmtNode *thenStmt) : cond(cond), thenStmt(thenStmt){};
+    IfStmt(ExprNode *cond, StmtNode *thenStmt);
 
     void output(int level);
     void typeCheck(Type* retType=nullptr);
@@ -251,7 +281,18 @@ private:
     StmtNode *thenStmt;
     StmtNode *elseStmt;
 public:
-    IfElseStmt(ExprNode *cond, StmtNode *thenStmt, StmtNode *elseStmt) : cond(cond), thenStmt(thenStmt), elseStmt(elseStmt) {};
+    IfElseStmt(ExprNode *cond, StmtNode *thenStmt, StmtNode *elseStmt) : cond(cond), thenStmt(thenStmt), elseStmt(elseStmt) {
+        Type* t = cond->getSymPtr()->getType();
+        if (t->isInt() && ((IntType*) t)->getSize() == 32) 
+        {
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+        if(t->isFunc()&&((FunctionType*)t)->getRetType()->isInt()){
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+    };
 
     void output(int level);
     void typeCheck(Type* retType=nullptr);
@@ -264,7 +305,18 @@ private:
     ExprNode *cond;
     StmtNode *Stmt;
 public:
-    WhileStmt(ExprNode *cond, StmtNode *Stmt) : cond(cond), Stmt(Stmt) {};
+    WhileStmt(ExprNode *cond, StmtNode *Stmt) : cond(cond), Stmt(Stmt) {
+        Type* t = cond->getSymPtr()->getType();
+        if (t->isInt() && ((IntType*) t)->getSize() == 32) 
+        {
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+        if(t->isFunc()&&((FunctionType*)t)->getRetType()->isInt()){
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+    };
 
     void output(int level);
     void typeCheck(Type* retType=nullptr);

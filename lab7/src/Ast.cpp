@@ -356,6 +356,42 @@ void IdList::genCode(){
 
 }
 
+Int2BoolExpr::Int2BoolExpr(ExprNode* expr) : ExprNode(nullptr), expr(expr) 
+{
+    symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+    dst = new Operand(symbolEntry);
+}
+
+void Int2BoolExpr::genCode(){
+    expr->genCode();
+    BasicBlock* bb = builder->getInsertBB();
+    Function* func = bb->getParent();
+    Instruction* cur_inst;
+    BasicBlock* tempbb = new BasicBlock(func);
+    BasicBlock* trueBB = new BasicBlock(func);
+    BasicBlock* falseBB = new BasicBlock(func);
+
+    Operand* src=new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0));
+    new CmpInstruction(CmpInstruction::NE, this->dst, this->expr->getOperand(),src , bb);
+    cur_inst=new CondBrInstruction(trueBB, tempbb, this->dst, bb);
+    this->trueList().push_back(cur_inst);
+    cur_inst=new UncondBrInstruction(falseBB, tempbb);
+    this->falseList().push_back(cur_inst);
+}
+
+IfStmt::IfStmt(ExprNode *cond, StmtNode *thenStmt) : cond(cond), thenStmt(thenStmt){
+        Type* t = cond->getSymPtr()->getType();
+        if (t->isInt() && ((IntType*) t)->getSize() == 32) 
+        {
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+        if(t->isFunc()&&((FunctionType*)t)->getRetType()->isInt()){
+            Int2BoolExpr* temp = new Int2BoolExpr(cond);
+            this->cond = temp;
+        }
+    };
+
 void IfStmt::genCode()
 {
     Function *func;
@@ -370,11 +406,18 @@ void IfStmt::genCode()
     builder -> getInsertBB() -> addSucc(then_bb);//设置后继
     end_bb -> addPred(then_bb);
     then_bb -> addSucc(end_bb);//
-
     Type* t = cond->getSymPtr()->getType();
+    //std::cout<<"unary"<<std::endl;
     if(t->isInt() && ((IntType*) t)->getSize() == 32){
         cond->int2Bool();
     }
+    // //if参数是返回值为整数的函数
+    // if(t->isFunc()&&((FunctionType*)t)->getRetType()->isInt()){
+    //     std::cout<<t->toStr()<<std::endl;
+    //     cond->int2Bool();
+    // }
+    // std::cout<<t->toStr()<<std::endl;
+    
     cond->genCode();
     backPatch(cond->trueList(), then_bb);
     backPatchFalse(cond->falseList(), end_bb);
