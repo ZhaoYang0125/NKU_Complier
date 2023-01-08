@@ -1,6 +1,7 @@
 %code top{
     #include <iostream>
     #include <assert.h>
+    #include <stack>
     #include "parser.h"
     extern Ast ast;
     int yylex();
@@ -8,6 +9,7 @@
     Type* declType;
     int paramCount=0;
     ArrayType* arrayType;
+    std::stack<StmtNode*> WhileStmts;
 }
 
 %code requires {
@@ -137,20 +139,25 @@ ReturnStmt
     ;
 WhileStmt
     :
-    WHILE LPAREN Cond RPAREN Stmt{
-        $$ = new WhileStmt($3, $5);
+    WHILE LPAREN Cond RPAREN{
+        StmtNode* st=new WhileStmt($3,nullptr);
+        WhileStmts.push(st);
+    } Stmt{
+        ((WhileStmt*)(WhileStmts.top()))->setStmt($6);
+        $$ = WhileStmts.top();
+        WhileStmts.pop();
     }
     ;
 BreakStmt
     : 
     BREAK SEMICOLON{
-        $$ = new BreakStmt();
+        $$ = new BreakStmt(WhileStmts.top());
     }
     ;
 ContinueStmt
     : 
     CONTINUE SEMICOLON{
-        $$ = new ContinueStmt();
+        $$ = new ContinueStmt(WhileStmts.top());
     }
     ;
 Exp

@@ -686,6 +686,9 @@ void WhileStmt::genCode()
     end_bb = new BasicBlock(func);
     cond_bb = new BasicBlock(func);
 
+    this->cond_bb = cond_bb;
+    this->end_bb = end_bb;
+
     new UncondBrInstruction(cond_bb, builder -> getInsertBB());
     //设置前驱后继
     cond_bb -> addPred(builder -> getInsertBB());
@@ -727,8 +730,24 @@ void WhileStmt::genCode()
     builder->setInsertBB(end_bb);
 }
 
-void BreakStmt::genCode(){}
-void ContinueStmt::genCode(){}
+void BreakStmt::genCode(){
+    Function* func = builder->getInsertBB()->getParent();
+    BasicBlock* bb = builder->getInsertBB();
+    BasicBlock* end_bb = ((WhileStmt*)this->stmt)->end_bb;
+    new UncondBrInstruction(end_bb, bb);
+    BasicBlock* next_bb = new BasicBlock(func);
+    builder->setInsertBB(next_bb);
+}
+
+void ContinueStmt::genCode(){
+    Function* func = builder->getInsertBB()->getParent();
+    BasicBlock* bb = builder->getInsertBB();
+    BasicBlock* cond_bb = ((WhileStmt*)this->stmt)->cond_bb;
+    new UncondBrInstruction(cond_bb, bb);
+    BasicBlock* next_bb = new BasicBlock(func);
+    builder->setInsertBB(next_bb);
+}
+
 void BreakStmt::typeCheck(Type* retType){}
 void ContinueStmt::typeCheck(Type* retType){}
 

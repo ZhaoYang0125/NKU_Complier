@@ -305,6 +305,8 @@ private:
     ExprNode *cond;
     StmtNode *Stmt;
 public:
+    BasicBlock* cond_bb=nullptr;
+    BasicBlock* end_bb=nullptr;
     WhileStmt(ExprNode *cond, StmtNode *Stmt) : cond(cond), Stmt(Stmt) {
         Type* t = cond->getSymPtr()->getType();
         if (t->isInt() && ((IntType*) t)->getSize() == 32) 
@@ -321,6 +323,7 @@ public:
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
+    void setStmt(StmtNode *Stmt){this->Stmt=Stmt;};
 };
 
 
@@ -338,8 +341,10 @@ public:
 
 class BreakStmt : public StmtNode
 {
+private:
+    StmtNode* stmt;
 public:
-    BreakStmt() {};
+    BreakStmt(StmtNode* stmt):stmt(stmt) {};
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();
@@ -347,8 +352,10 @@ public:
 
 class ContinueStmt : public StmtNode
 {
+private:
+    StmtNode* stmt;
 public:
-    ContinueStmt() {};
+    ContinueStmt(StmtNode* stmt):stmt(stmt) {};
     void output(int level);
     void typeCheck(Type* retType=nullptr);
     void genCode();

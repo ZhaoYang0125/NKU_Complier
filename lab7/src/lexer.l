@@ -249,6 +249,22 @@ commentend "*/"
     st->install(yytext, se);
     return ID;
 }
+"getch" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4(yytext);
+    char* str=new char[strlen(yytext)+1];
+    strcpy(str,yytext);
+    yylval.strtype=str;
+    std::vector<Type*> vec;
+    Type* funcType = new FunctionType(TypeSystem::intType, vec);
+    SymbolTable* st = identifiers;
+    while(st->getPrev())
+        st = st->getPrev();
+    SymbolEntry* se = new IdentifierSymbolEntry(funcType, yytext, st->getLevel());
+    if(!(st->lookup(yytext)))
+    st->install(yytext, se);
+    return ID;
+}
 "putint" {
     if(dump_tokens)
         DEBUG_FOR_LAB4(yytext);
