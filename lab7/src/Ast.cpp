@@ -411,12 +411,6 @@ void IfStmt::genCode()
     if(t->isInt() && ((IntType*) t)->getSize() == 32){
         cond->int2Bool();
     }
-    // //if参数是返回值为整数的函数
-    // if(t->isFunc()&&((FunctionType*)t)->getRetType()->isInt()){
-    //     std::cout<<t->toStr()<<std::endl;
-    //     cond->int2Bool();
-    // }
-    // std::cout<<t->toStr()<<std::endl;
     
     cond->genCode();
     backPatch(cond->trueList(), then_bb);
@@ -455,23 +449,6 @@ void IfElseStmt::genCode()
     else_bb -> addSucc(end_bb);
 
     cond->genCode();
-    Type* temp = cond->getSymPtr()->getType();
-    //下面判断只对单目运算式有效
-    if(temp->isInt() && ((IntType*) temp)->getSize() == 32){
-        BasicBlock* bb=cond->builder->getInsertBB();
-        Operand *src = cond->getOperand();
-        SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, 0);
-        Constant* digit = new Constant(se);
-        cond->int2Bool();
-        //cmp指令
-        CmpInstruction* temp1 = new CmpInstruction(CmpInstruction::NE, cond->dst, src, digit->getOperand(), bb);
-        cond->trueList().push_back(temp1);//更新列表
-        cond->falseList().push_back(temp1);
-        //条件跳转指令
-        Instruction* temp2 = new CondBrInstruction(nullptr,nullptr,cond->dst,bb);
-        cond->trueList().push_back(temp2);
-        cond->falseList().push_back(temp2);
-    }
 
     backPatch(cond->trueList(),then_bb);
     backPatchFalse(cond->falseList(),else_bb);
@@ -525,8 +502,6 @@ void DeclStmt::genCode()
             if(ids->assignlist.size()>0&&ids->assignlist[j]){//如果有预先赋值
                 //std::cout<<"i"<<std::endl;
                 //获取赋的值
-                //se->setValue(ids->assignlist[j])
-                //std::cout<<ids->assignlist[j]->expr->getSymPtr()->toStr()<<std::endl;
                 AssignStmt* assign=ids->assignlist[j];
                 assign -> genCode();
                 src = assign-> expr -> getOperand();
@@ -703,22 +678,6 @@ void WhileStmt::genCode()
 
     builder->setInsertBB(cond_bb);
     cond -> genCode();
-    Type* t = cond->getSymPtr()->getType();
-    if(t->isInt() && ((IntType*) t)->getSize() == 32){
-        BasicBlock* bb=cond->builder->getInsertBB();
-        Operand *src = cond->getOperand();
-        SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, 0);
-        Constant* digit = new Constant(se);
-        cond->int2Bool();
-        //cmp指令
-        CmpInstruction* temp1 = new CmpInstruction(CmpInstruction::NE, cond->dst, src, digit->getOperand(), bb);
-        cond->trueList().push_back(temp1);//更新列表
-        cond->falseList().push_back(temp1);
-        //条件跳转指令
-        Instruction* temp2 = new CondBrInstruction(nullptr,nullptr,cond->dst,bb);
-        cond->trueList().push_back(temp2);
-        cond->falseList().push_back(temp2);
-    }
 
     backPatch(cond -> trueList(), loop_bb);
     backPatchFalse(cond -> falseList(), end_bb);
