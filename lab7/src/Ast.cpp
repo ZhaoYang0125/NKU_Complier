@@ -228,8 +228,12 @@ void BinaryExpr::genCode()
         true_list = merge(expr1->trueList(), expr2->trueList());
         false_list = merge(expr1->falseList(), expr2->falseList());
         //条件跳转指令
-        Instruction* temp = new CondBrInstruction(nullptr,nullptr,dst,bb);
+        BasicBlock *truebb = new BasicBlock(func);
+        BasicBlock *falsebb = new BasicBlock(func);
+        BasicBlock *tempbb = new BasicBlock(func);
+        Instruction* temp = new CondBrInstruction(truebb,tempbb,dst,bb);
         this->trueList().push_back(temp);
+        temp=new UncondBrInstruction(falsebb, tempbb);
         this->falseList().push_back(temp);
     }
 }

@@ -117,6 +117,9 @@ BlockStmt
             identifiers = identifiers->getPrev();
             delete top;
         }
+    |LBRACE RBRACE{
+        $$=new CompoundStmt(nullptr);
+    }
     ;
 IfStmt
     : IF LPAREN Cond RPAREN Stmt %prec THEN {
