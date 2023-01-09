@@ -4,6 +4,7 @@
 #include "Instruction.h"
 #include "IRBuilder.h"
 #include <string>
+#include<queue>
 #include "Type.h"
 
 extern Unit unit;
@@ -12,6 +13,7 @@ extern FILE *yyout;
 int Node::counter = 0;
 IRBuilder *Node::builder = nullptr;
 bool isreturn=false;
+std::queue<bool>isreturn_queue;
 
 Node::Node()
 {
@@ -109,6 +111,19 @@ void FunctionDef::genCode()
      * Construct control flow graph. You need do set successors and predecessors for each basic block.
      * Todo
      */
+    SymbolEntry *se = this->getSymbolEntry();
+    Type *ret = ((FunctionType *)(se->getType()))->getRetType();
+            //std::cout<<isreturn_queue.front()<<std::endl;
+    if(!isreturn_queue.front() && ret == TypeSystem::voidType){//没有return且函数为空，加上return语句
+            BasicBlock* ret_bb = builder->getInsertBB();
+            Operand* src=nullptr;
+            // if(retValue){
+            //     retValue->genCode();
+            //     src=retValue->getOperand();
+            // }
+            new RetInstruction(src,ret_bb);
+        }
+        isreturn_queue.pop();
 }
 
 void BinaryExpr::genCode()
@@ -591,14 +606,16 @@ void CallExpr::genCode()
         temp = ((ExprNode*)temp->getNext());
     }
     BasicBlock* bb = builder->getInsertBB();
-    Type* retType = symbolEntry->getType();
+    Type* retType = ((FunctionType*)symbolEntry->getType())->getRetType();
     if(!retType->isVoid())
     {
         Type *type2 = new IntType(32);  // temp register for function retValue
         SymbolEntry *addr_se2 = new TemporarySymbolEntry(type2, SymbolTable::getLabel());
         dst = new Operand(addr_se2);
     }
-    //std::cout<<this->type->toStr()<<std::endl;
+    else{
+        dst=nullptr;
+    }
     new CallInstruction(dst, symbolEntry, operands, bb);
 }
 
@@ -753,6 +770,9 @@ void Ast::typeCheck(Type* retType)
 void FunctionDef::typeCheck(Type* retType)
 {
     // Todo
+    isreturn=false;
+    isreturn_queue.push(false);
+    
     SymbolEntry *se = this->getSymbolEntry();
     Type *ret = ((FunctionType *)(se->getType()))->getRetType();
     if (stmt == nullptr&&ret != TypeSystem::voidType)//函数内容为空
@@ -762,6 +782,8 @@ void FunctionDef::typeCheck(Type* retType)
     }
     else{
         stmt->typeCheck(ret);
+        if(isreturn)
+            isreturn_queue.back()=true;
         if(!isreturn && ret != TypeSystem::voidType){//函数没有return语句
             fprintf(stderr, "返回值不为空的函数\'%s\'缺少return语句。\n",se->toStr().c_str());
             exit(EXIT_FAILURE);
@@ -1006,7 +1028,7 @@ CallExpr::CallExpr(SymbolEntry *se, ExprNode *param /*=NULL*/) : ExprNode(se), p
         temp = (ExprNode *)(temp->getNext());
         paramnum++;
     }
-    FunctionType* type=(FunctionType*)s->getType();
+    FunctionType* type= (FunctionType*)s->getType();
     int paramsize=type->paramsType.size();
 
     this->type=((FunctionType*)s->getType())->getRetType();

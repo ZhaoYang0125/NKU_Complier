@@ -1,6 +1,18 @@
-int main()
-{
-    if (1 < 8 != 7 % 2) { putch(67); }
-    if (3 > 4 == 0) { putch(68); }
-    return 0;
+void reverse(int n) {
+	int next;
+	if (n <= 1) {
+		next=getint();
+		putint(next);
+	}
+	else {
+		next=getint();
+		reverse(n-1);
+		putint(next);
+	}
+}
+
+int main() {
+	int i=200;
+	reverse(i);
+	return 0;
 }

@@ -801,7 +801,7 @@ void CallInstruction::genMachineCode(AsmBuilder* builder){
     // 在进行函数调用时，对于含参函数，需要使用 R0-R3 寄存器传递参数，
     int paramCount=int(operands.size()-1);//参数数目
     //std::cout<<paramCount<<std::endl;
-    if(paramCount<=4){
+    if(paramCount<=4&&paramCount>0){
         for(int i=0;i<paramCount;i++){
             dst1=genMachineReg(i);
             operand=genMachineOperand(operands[i+1]);
@@ -816,7 +816,7 @@ void CallInstruction::genMachineCode(AsmBuilder* builder){
         }
     }
     // 如果参数个数大于四个还需要生成 PUSH 指令来传递参数；
-    else{
+    else if(paramCount>4){
         for(int i=0;i<4;i++){
             dst1=genMachineReg(i);
             operand=genMachineOperand(operands[i+1]);
