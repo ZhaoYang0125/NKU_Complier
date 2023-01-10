@@ -44,7 +44,7 @@
 %nterm <stmttype> BreakStmt ContinueStmt
 %nterm <stmttype> FuncFParam FuncFParams
 %nterm <exprtype> FuncRParams
-%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp
+%nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp EqExp
 %nterm <exprtype> ArrayIndices
 %nterm <type> Type
 
@@ -302,27 +302,29 @@ RelExp
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::LESSEQUAL, $1, $3);
     }
-    |
-    RelExp EQUAL AddExp
-    {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
-        $$ = new BinaryExpr(se, BinaryExpr::EQUAL, $1, $3);
-    }
-    |
-    RelExp NOTEQUAL AddExp
-    {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
-        $$ = new BinaryExpr(se, BinaryExpr::NOTEQUAL, $1, $3);
-    }
     ;
 LAndExp
     :
-    RelExp {$$ = $1;}
+    EqExp {$$ = $1;}
     |
-    LAndExp AND RelExp
+    LAndExp AND EqExp
     {
         SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new BinaryExpr(se, BinaryExpr::AND, $1, $3);
+    }
+    ;
+EqExp
+    : 
+    RelExp {$$ = $1;}
+    | 
+    EqExp EQUAL RelExp {
+        SymbolEntry* se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::EQUAL, $1, $3);
+    }
+    | 
+    EqExp NOTEQUAL RelExp {
+        SymbolEntry* se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
+        $$ = new BinaryExpr(se, BinaryExpr::NOTEQUAL, $1, $3);
     }
     ;
 LOrExp

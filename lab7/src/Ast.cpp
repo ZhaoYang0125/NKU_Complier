@@ -4,7 +4,7 @@
 #include "Instruction.h"
 #include "IRBuilder.h"
 #include <string>
-#include<queue>
+#include <queue>
 #include "Type.h"
 
 extern Unit unit;
@@ -111,6 +111,45 @@ void FunctionDef::genCode()
      * Construct control flow graph. You need do set successors and predecessors for each basic block.
      * Todo
      */
+    for (auto block = func->begin(); block != func->end(); block++)
+    {
+        //获取该块的最后一条指令
+        Instruction* i = (*block)->begin();
+        Instruction* last = (*block)->rbegin();
+        //从块中删除条件型语句
+        while (i != last) {
+            if (i->isCond() || i->isUncond()) {
+                (*block)->remove(i);
+            }
+            i = i->getNext();
+        }
+        
+        if (last->isCond()) {
+            BasicBlock *truebranch, *falsebranch;
+            truebranch = dynamic_cast<CondBrInstruction*>(last)->getTrueBranch();
+            falsebranch = dynamic_cast<CondBrInstruction*>(last)->getFalseBranch();
+            
+            (*block)->addSucc(truebranch);
+            (*block)->addSucc(falsebranch);
+            truebranch->addPred(*block);
+            falsebranch->addPred(*block);
+        } 
+        else if (last->isUncond())  //无条件跳转指令可获取跳转的目标块
+        {
+            BasicBlock* dst =
+                dynamic_cast<UncondBrInstruction*>(last)->getBranch();
+            (*block)->addSucc(dst);
+            //如果无条件跳转的目标块为空 那么就插入return
+            dst->addPred(*block);
+            if (dst->empty()) {
+                if (((FunctionType*)(se->getType()))->getRetType() == TypeSystem::intType)
+                    new RetInstruction(new Operand(new ConstantSymbolEntry( TypeSystem::intType, 0)), dst);
+                else if (((FunctionType*)(se->getType()))->getRetType() == TypeSystem::voidType)
+                    new RetInstruction(nullptr, dst);
+            }
+        }
+    }
+
     SymbolEntry *se = this->getSymbolEntry();
     Type *ret = ((FunctionType *)(se->getType()))->getRetType();
             //std::cout<<isreturn_queue.front()<<std::endl;
@@ -133,8 +172,8 @@ void BinaryExpr::genCode()
     if (op == AND)
     {
         BasicBlock *trueBB = new BasicBlock(func); // if the result of lhs is true, jump to the trueBB.
-        trueBB->addPred(bb);//放置这个基本块，设置前驱后继
-        bb->addSucc(trueBB);
+        // trueBB->addPred(bb);//放置这个基本块，设置前驱后继
+        // bb->addSucc(trueBB);
         //判断如果是int型则转化为bool
         
         if(!expr1->getSymPtr()->isVariable()&& expr1->getOperand()->getType()->isInt()){
@@ -155,8 +194,8 @@ void BinaryExpr::genCode()
     {
         // Todo 
         BasicBlock* falseBB = new BasicBlock(func);
-        falseBB->addPred(bb);
-        bb->addSucc(falseBB);
+        // falseBB->addPred(bb);
+        // bb->addSucc(falseBB);
         //判断如果是int型则转化为bool
         if(expr1->getOperand()->getType()->isInt()){
             expr1->int2Bool();
@@ -240,8 +279,8 @@ void BinaryExpr::genCode()
 
         // need modify
         //正确错误列表合并
-        true_list = merge(expr1->trueList(), expr2->trueList());
-        false_list = merge(expr1->falseList(), expr2->falseList());
+        //true_list = merge(expr1->trueList(), expr2->trueList());
+        //false_list = merge(expr1->falseList(), expr2->falseList());
         //条件跳转指令
         BasicBlock *truebb = new BasicBlock(func);
         BasicBlock *falsebb = new BasicBlock(func);
@@ -421,10 +460,11 @@ void IfStmt::genCode()
     end_bb = new BasicBlock(func);
     //printf("label: %d, label: %d\n", then_bb->getNo(), end_bb->getNo());
 
-    then_bb -> addPred(builder->getInsertBB());//设置其前驱
-    builder -> getInsertBB() -> addSucc(then_bb);//设置后继
-    end_bb -> addPred(then_bb);
-    then_bb -> addSucc(end_bb);//
+    // then_bb -> addPred(builder->getInsertBB());//设置其前驱
+    // builder -> getInsertBB() -> addSucc(then_bb);//设置后继
+    // end_bb -> addPred(then_bb);
+    // then_bb -> addSucc(end_bb);//
+
     Type* t = cond->getSymPtr()->getType();
     //std::cout<<"unary"<<std::endl;
     if(t->isInt() && ((IntType*) t)->getSize() == 32){
@@ -456,16 +496,16 @@ void IfElseStmt::genCode()
     end_bb = new BasicBlock(func);
 
     //设置前驱后继
-    then_bb -> addPred(builder -> getInsertBB());
-    builder -> getInsertBB() -> addSucc(then_bb);
+    // then_bb -> addPred(builder -> getInsertBB());
+    // builder -> getInsertBB() -> addSucc(then_bb);
 
-    else_bb -> addPred(builder -> getInsertBB());
-    builder -> getInsertBB() -> addSucc(else_bb);
+    // else_bb -> addPred(builder -> getInsertBB());
+    // builder -> getInsertBB() -> addSucc(else_bb);
 
-    end_bb -> addPred(then_bb);
-    then_bb -> addSucc(end_bb);
-    end_bb -> addPred(else_bb);
-    else_bb -> addSucc(end_bb);
+    // end_bb -> addPred(then_bb);
+    // then_bb -> addSucc(end_bb);
+    // end_bb -> addPred(else_bb);
+    // else_bb -> addSucc(end_bb);
 
     cond->genCode();
 
@@ -687,15 +727,15 @@ void WhileStmt::genCode()
 
     new UncondBrInstruction(cond_bb, builder -> getInsertBB());
     //设置前驱后继
-    cond_bb -> addPred(builder -> getInsertBB());
-    builder -> getInsertBB() -> addSucc(cond_bb);
-    loop_bb -> addPred(cond_bb);
-    cond_bb -> addSucc(loop_bb);
-    end_bb -> addPred(loop_bb);
-    loop_bb -> addSucc(end_bb);
+    // cond_bb -> addPred(builder -> getInsertBB());
+    // builder -> getInsertBB() -> addSucc(cond_bb);
+    // loop_bb -> addPred(cond_bb);
+    // cond_bb -> addSucc(loop_bb);
+    // end_bb -> addPred(loop_bb);
+    // loop_bb -> addSucc(end_bb);
 
-    end_bb -> addPred(cond_bb);
-    cond_bb -> addSucc(end_bb);
+    // end_bb -> addPred(cond_bb);
+    // cond_bb -> addSucc(end_bb);
 
     builder->setInsertBB(cond_bb);
     cond -> genCode();
@@ -796,7 +836,7 @@ void BinaryExpr::typeCheck(Type* retType)
     // Todo
     expr1->typeCheck(retType);
     expr2->typeCheck(retType);
-     Type *type1 = expr1->getSymPtr()->getType();
+    Type *type1 = expr1->getSymPtr()->getType();
     // Type *type2 = expr2->getSymPtr()->getType();
 
     // if (!type1->equal(type2))
@@ -1028,7 +1068,7 @@ CallExpr::CallExpr(SymbolEntry *se, ExprNode *param /*=NULL*/) : ExprNode(se), p
         temp = (ExprNode *)(temp->getNext());
         paramnum++;
     }
-    FunctionType* type= (FunctionType*)s->getType();
+    FunctionType* type = (FunctionType*)s->getType();
     int paramsize=type->paramsType.size();
 
     this->type=((FunctionType*)s->getType())->getRetType();
