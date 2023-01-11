@@ -50,12 +50,16 @@ public:
     Operand* getOperand() {return dst;};
     SymbolEntry* getSymPtr() {return symbolEntry;};
     Type* getType() { return type; };
-    virtual int getValue()=0;
+    virtual int getValue() { return -1; };
     // int类型转化为bool型 /*retodo*/
     void int2Bool(){
         symbolEntry = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         dst = new Operand(symbolEntry);
     }
+    void genCode() { return; };
+    void output(int level){ return; };
+    virtual void typeCheck(Type* retType = nullptr) { return ; };
+
 };
 
 class UnaryExpr : public ExprNode

@@ -45,7 +45,7 @@
 %nterm <stmttype> FuncFParam FuncFParams
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp EqExp
-%nterm <exprtype> ArrayIndices
+%nterm <exprtype> ArrayIndices FuncArrayIndices
 %nterm <type> Type
 
 %precedence THEN
@@ -553,6 +553,53 @@ FuncFParam
         tem->idlist.push_back(new Id(se));
         $$=(StmtNode*)tem;
         delete []$2;
+    }
+    | Type ID FuncArrayIndices {
+        std::stack<ExprNode*> vec;   //分别存放维度值
+        ExprNode* temp = $3;
+        // 保存数组维度，从高维到低维
+        while(temp){
+            vec.push(temp);
+            temp = (ExprNode*)(temp->getNext());
+        }
+
+        Type *type = TypeSystem::intType;
+        Type* temp1;
+        while(!vec.empty()){
+        //嵌套数组类型
+            temp1 = new ArrayType(type, vec.top()->getValue());
+            //考虑多维数组 每个元素是数组指针
+            //如果元素是数组 type设置为数组维度
+            if(type->isArray())
+                ((ArrayType*)type)->setArrayType(temp1);
+            type = temp1;
+            vec.pop();
+        }
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(type, $2, identifiers->getLevel(),paramCount++);
+        //((IdentifierSymbolEntry*)se)->setAddr(new Operand(se));
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist); // 标识符列表
+
+        identifiers->install($2, se);
+
+        tem->idlist.push_back(new Id(se));
+        /* 插入一条nullptr，让idlist和assignlist对齐，暂时行得通 */
+        tem->assignlist.push_back(nullptr);
+ 
+        $$=(StmtNode*)tem;
+        delete []$2;
+    }
+    ;
+ // 输入参数为数组 arr[][1]
+FuncArrayIndices 
+    : LBRACKET RBRACKET {
+        $$ = new ExprNode(nullptr);
+    }
+    | FuncArrayIndices LBRACKET Exp RBRACKET {
+        $$ = $1;
+        $$->setNext($3);
     }
     ;
 FuncDef

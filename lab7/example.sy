@@ -1,6 +1,9 @@
+int maxArea(int height[]) {
+  return 0;
+}
 
-int main()
-{
-    if(1==0x66<=077){ putch(69); }
+int main(){
+    int a[10];
+    maxArea(a);
     return 0;
 }
