@@ -152,17 +152,12 @@ void FunctionDef::genCode()
 
     SymbolEntry *se = this->getSymbolEntry();
     Type *ret = ((FunctionType *)(se->getType()))->getRetType();
-            //std::cout<<isreturn_queue.front()<<std::endl;
     if(!isreturn_queue.front() && ret == TypeSystem::voidType){//没有return且函数为空，加上return语句
             BasicBlock* ret_bb = builder->getInsertBB();
             Operand* src=nullptr;
-            // if(retValue){
-            //     retValue->genCode();
-            //     src=retValue->getOperand();
-            // }
             new RetInstruction(src,ret_bb);
         }
-        isreturn_queue.pop();
+    isreturn_queue.pop();
 }
 
 void BinaryExpr::genCode()

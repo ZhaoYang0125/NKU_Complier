@@ -1,5 +1,6 @@
 #include "MachineCode.h"
 #include"Type.h"
+#include<string.h>
 #include<iostream>
 extern FILE* yyout;
 
@@ -437,7 +438,8 @@ std::vector<MachineOperand*> MachineFunction::getSavedRegs()
 
 void MachineFunction::output()
 {
-    const char *func_name = this->sym_ptr->toStr().c_str()+1;
+    char *func_name=new char[strlen(this->sym_ptr->toStr().c_str())];// = this->sym_ptr->toStr().c_str()+1;
+    strcpy(func_name,this->sym_ptr->toStr().c_str()+1);
     fprintf(yyout, "\t.global %s\n", func_name);
     fprintf(yyout, "\t.type %s , %%function\n", func_name);
     fprintf(yyout, "%s:\n", func_name);

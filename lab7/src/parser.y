@@ -638,6 +638,7 @@ FuncDef
     {
         Type *funcType = new FunctionType($1,{});
         SymbolEntry *se = new IdentifierSymbolEntry(funcType, $2, identifiers->getLevel());
+        //std::cout<<se->toStr()<<std::endl;
         bool a=false;
         if(!identifiers->lookup($2)){
             identifiers->install($2, se);
