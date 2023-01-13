@@ -301,6 +301,44 @@ commentend "*/"
         st->install(yytext, se);
     return ID;
 }
+"putarray" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4(yytext);
+    char* str=new char[strlen(yytext)+1];
+    strcpy(str,yytext);
+    yylval.strtype=str;
+    std::vector<Type*> vec;
+    Type *t=(Type*)(new IntType(32));
+    vec.push_back(t);
+    Type* t2 = (Type*)(new ArrayType(TypeSystem::intType, -1));
+    vec.push_back(t2);
+    Type* funcType = new FunctionType(TypeSystem::voidType, vec);
+    SymbolTable* st = identifiers;
+    while(st->getPrev())
+        st = st->getPrev();
+    SymbolEntry* se = new IdentifierSymbolEntry(funcType, yytext, st->getLevel());
+    if(!(st->lookup(yytext)))
+        st->install(yytext, se);
+    return ID;
+}
+"getarray" {
+    if(dump_tokens)
+        DEBUG_FOR_LAB4(yytext);
+    char* str=new char[strlen(yytext)+1];
+    strcpy(str,yytext);
+    yylval.strtype=str;
+    std::vector<Type*> vec;
+    Type* t2 = (Type*)(new ArrayType(TypeSystem::intType, -1));
+    vec.push_back(t2);
+    Type* funcType = new FunctionType(TypeSystem::intType, vec);
+    SymbolTable* st = identifiers;
+    while(st->getPrev())
+        st = st->getPrev();
+    SymbolEntry* se = new IdentifierSymbolEntry(funcType, yytext, st->getLevel());
+    if(!(st->lookup(yytext)))
+        st->install(yytext, se);
+    return ID;
+}
 
 {ID} {
     if(dump_tokens)

@@ -495,6 +495,7 @@ VarDef
             assert( !a);
         }
         tem->idlist.push_back(new Id(se));
+        tem->assignlist.push_back(nullptr);
         $$=(StmtNode*)tem;
         delete []$1;
     }
