@@ -316,6 +316,7 @@ void BranchMInstruction::output()
             break;
         case BX:
         {
+            //
             auto fp = new MachineOperand(MachineOperand::REG, 11);
             auto lr = new MachineOperand(MachineOperand::REG, 14);
             auto cur_inst = new StackMInstrcuton(this->getParent(), StackMInstrcuton::POP, this->getParent()->getParent()->getSavedRegs(), fp, lr);
@@ -461,6 +462,21 @@ void MachineFunction::output()
     cur_inst->output();
     cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, new MachineOperand(MachineOperand::IMM, AllocSpace(0)));
     cur_inst->output();
+
+    // int offset=AllocSpace(0);
+    // if(offset!=0){
+    //     MachineOperand* size = new MachineOperand(MachineOperand::IMM, offset);
+    //     if (offset < -255 || offset > 255) {//偏移量太大
+    //         MachineOperand* r4 = new MachineOperand(MachineOperand::REG, 4);
+    //         cur_inst=new LoadMInstruction(nullptr, r4, size);
+    //         cur_inst->output();
+    //         cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp,r4);
+    //         cur_inst->output();
+    //     } else {
+    //         cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, size);
+    //         cur_inst->output();
+    //     }
+    // }
     for(auto iter : block_list)
         iter->output();
     fprintf(yyout, "\n");
@@ -473,27 +489,74 @@ void MachineUnit::PrintGlobalDecl()
     if(!global_list.empty()){
         fprintf(yyout,"\t.data\n");
     }
-    std::vector<IdentifierSymbolEntry*> constGlobal_list;
+    std::vector<IdentifierSymbolEntry*> Global_list;
+    std::vector<IdentifierSymbolEntry*> Global_array_list;
     for(auto global:global_list){
         IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global;
         if(se->getConst()){//constId
-            constGlobal_list.push_back(se);
+            Global_list.push_back(se);
+        }
+        else if(se->isAllZero()){
+            //std::cout<<"allzero"<<std::endl;
+            Global_array_list.push_back(se);
         }
         else{//变量
             fprintf(yyout, ".global %s\n", se->toStr().c_str());
             fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->size/8);
             fprintf(yyout, "%s:\n", se->toStr().c_str());
-            fprintf(yyout, "\t.word %d\n", se->getValue());
+            if(!se->getType()->isArray())
+            {
+                fprintf(yyout, "\t.word %d\n", se->getValue());
+            }
+            else
+            {
+                int n = se->getType()->getSize() / 32;
+                Type* arrTy = ((ArrayType*)(se->getType()))->getElementType();
+
+                while (!arrTy->isInt()) {
+                    arrTy = ((ArrayType*)(arrTy))->getElementType();
+                } 
+
+                int* p = se->getArrayValue();
+                for (int i = 0; i < n; i++) {
+                    fprintf(yyout, "\t.word %d\n", (int)p[i]);
+                }
+            }
         }
     }
-    if(constGlobal_list.empty()==false){
+    if(Global_list.empty()==false){
         fprintf(yyout, ".section .rodata\n");
-        for(auto con:constGlobal_list){
+        for(auto con:Global_list){
             IdentifierSymbolEntry* se=con;
             fprintf(yyout, ".global %s\n", se->toStr().c_str());
             fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(), se->getType()->size/ 8);
             fprintf(yyout, "%s:\n", se->toStr().c_str());
-            fprintf(yyout, "\t.word %d\n", se->getValue());
+            if(!se->getType()->isArray())
+            {
+                fprintf(yyout, "\t.word %d\n", se->getValue());
+            }
+            else
+            {
+                int n = se->getType()->getSize() / 32;
+                Type* arrTy = ((ArrayType*)(se->getType()))->getElementType();
+
+                while (!arrTy->isInt()) {
+                    arrTy = ((ArrayType*)(arrTy))->getElementType();
+                } 
+
+                int* p = se->getArrayValue();
+                for (int i = 0; i < n; i++) {
+                    fprintf(yyout, "\t.word %d\n", (int)p[i]);
+                }
+            }
+        }
+    }
+    if(Global_array_list.empty()==false){
+        for (auto a : Global_array_list) {
+            IdentifierSymbolEntry* se = a;
+            if (se->getType()->isArray()) {
+                fprintf(yyout, "\t.comm %s, %d, 4\n", se->toStr().c_str(),se->getType()->getSize() / 8);
+            }
         }
     }
 }

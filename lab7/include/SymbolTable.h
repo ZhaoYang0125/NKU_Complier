@@ -50,6 +50,7 @@ public:
     int getValue() const {return value;};
     std::string toStr();
     // You can add any function you need here.
+    ConstantSymbolEntry(Type* type): SymbolEntry(type, SymbolEntry::CONSTANT) {};
 };
 
 
@@ -89,6 +90,7 @@ private:
     // 数组相关
     int* arrayValue;
     bool allZero;
+    int notZeroNum;
 
 public:
     IdentifierSymbolEntry(Type *type, std::string name, int scope, int paramNo=-1);
@@ -117,6 +119,8 @@ public:
     int* getArrayValue() const { return arrayValue; };
     void setAllZero() { allZero = true; };
     bool isAllZero() const { return allZero; };
+    int getNotZeroNum() const { return notZeroNum; }
+    void setNotZeroNum(int num) { notZeroNum = num; }
 };
 
 
@@ -143,14 +147,17 @@ class TemporarySymbolEntry : public SymbolEntry
 private:
     int stack_offset;
     int label;
+    int para_No=-1;
 public:
     TemporarySymbolEntry(Type *type, int label);
+    TemporarySymbolEntry(Type *type, int label,int para_No);
     virtual ~TemporarySymbolEntry() {};
     std::string toStr();
     int getLabel() const {return label;};
     void setOffset(int offset) { this->stack_offset = offset; };
     int getOffset() { return this->stack_offset; };
     // You can add any function you need here.
+    int getParamNo(){return para_No;};
 };
 
 // symbol table managing identifier symbol entries

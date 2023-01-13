@@ -79,6 +79,12 @@ TemporarySymbolEntry::TemporarySymbolEntry(Type *type, int label) : SymbolEntry(
     this->label = label;
 }
 
+TemporarySymbolEntry::TemporarySymbolEntry(Type *type, int label,int no) : SymbolEntry(type, SymbolEntry::TEMPORARY)
+{
+    this->label = label;
+    this->para_No=no;
+}
+
 std::string TemporarySymbolEntry::toStr()
 {
     std::ostringstream buffer;

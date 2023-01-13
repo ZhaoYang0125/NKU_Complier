@@ -81,30 +81,32 @@ void FunctionDef::genCode()
     // set the insert point to the entry basicblock of this function.
     builder->setInsertBB(entry);
 
-    if(ids!=nullptr)
-    for(unsigned long int j=0;j<ids->idlist.size();j++){
-        IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
-        //std::cout<<se->getScope()<<std::endl;
-        Function *func = builder->getInsertBB()->getParent();
-        BasicBlock *entry = func->getEntry();
-        Operand *addr;
-        SymbolEntry *addr_se;
-        Type *type;
-        type = new PointerType(se->getType());
-        addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel());//临时符号表
-        addr = new Operand(addr_se);
-        Instruction *alloca = new AllocaInstruction(addr, se); // alloca指令
-        entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
-        
-        Operand *addr2 = new Operand(ids->idlist[j]->getSymPtr());
+    if(ids!=nullptr){
+        for(unsigned long int j=0;j<ids->idlist.size();j++){
+            // if(j==4)
+            //     break;
+            IdentifierSymbolEntry *se = dynamic_cast<IdentifierSymbolEntry *>(ids->idlist[j]->getSymPtr());
+            //std::cout<<se->getScope()<<std::endl;
+            Function *func = builder->getInsertBB()->getParent();
+            BasicBlock *entry = func->getEntry();
+            Operand *addr;
+            SymbolEntry *addr_se;
+            Type *type;
+            type = new PointerType(se->getType());
+            addr_se = new TemporarySymbolEntry(type, SymbolTable::getLabel(),j);//临时符号表
+            addr = new Operand(addr_se);
+            Instruction *alloca = new AllocaInstruction(addr, se); // alloca指令
+            entry->insertFront(alloca);               // allocate instructions should be inserted into the begin of the entry block.
+            
+            Operand *addr2 = new Operand(ids->idlist[j]->getSymPtr());
 
-        StoreInstruction *store = new StoreInstruction(addr, addr2,builder->getInsertBB());
-        se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
-        
-        entry -> insertBack(store);
-        func->params.push_back(addr2); 
+            StoreInstruction *store = new StoreInstruction(addr, addr2,builder->getInsertBB());
+            se->setAddr(addr);                        // set the addr operand in symbol entry so that we can use it in subsequent code generation.
+            
+            entry -> insertBack(store);
+            func->params.push_back(addr2); 
+        }
     }
-
     stmt->genCode();
 
     /**
@@ -149,15 +151,14 @@ void FunctionDef::genCode()
             }
         }
     }
-
-    SymbolEntry *se = this->getSymbolEntry();
-    Type *ret = ((FunctionType *)(se->getType()))->getRetType();
-    if(!isreturn_queue.front() && ret == TypeSystem::voidType){//没有return且函数为空，加上return语句
-            BasicBlock* ret_bb = builder->getInsertBB();
-            Operand* src=nullptr;
-            new RetInstruction(src,ret_bb);
-        }
-    isreturn_queue.pop();
+            SymbolEntry *se = this->getSymbolEntry();
+            Type *ret = ((FunctionType *)(se->getType()))->getRetType();
+            if(!isreturn_queue.front() && ret == TypeSystem::voidType){//没有return且函数为空，加上return语句
+                    BasicBlock* ret_bb = builder->getInsertBB();
+                    Operand* src=nullptr;
+                    new RetInstruction(src,ret_bb);
+                }
+            isreturn_queue.pop();
 }
 
 void BinaryExpr::genCode()
@@ -1292,4 +1293,46 @@ int Constant::getValue()
 int Id::getValue() 
 {
     return ((IdentifierSymbolEntry*)symbolEntry)->getValue();
+}
+
+void InitValueListExpr::addExpr(ExprNode *expr)
+{
+    if (this->expr == nullptr) {
+        if(childCnt != 0) { printf("childCnt != 0\n"); exit(-1); }
+        childCnt++;
+        this->expr = expr;
+    } else {
+        childCnt++;
+        this->expr->setNext(expr);
+    }
+}
+
+bool InitValueListExpr::isFull()
+{
+    ArrayType* type = (ArrayType*)(this->symbolEntry->getType());
+    return childCnt == type->getLength();
+}
+
+void InitValueListExpr::fill()
+{
+    if (allZero) {
+        return;
+    }
+    Type* type = ((ArrayType*)(this->getType()))->getElementType();
+    if (type->isArray()) {
+        while (!isFull()) {
+            this->addExpr(new InitValueListExpr(new ConstantSymbolEntry(type)));
+        }
+        ExprNode* temp = expr;
+        while (temp) {
+            ((InitValueListExpr*)temp)->fill();
+            temp = (ExprNode*)(temp->getNext());
+        }
+    }
+    if (type->isInt()) {
+        while (!isFull()) {
+            this->addExpr(new Constant(new ConstantSymbolEntry(type, 0)));
+        }
+        return;
+    }
 }

@@ -396,5 +396,27 @@ public:
     void genCode(Unit *unit);
 };
 
+class InitValueListExpr : public ExprNode {
+private:
+    ExprNode* expr;
+    int childCnt;
+    bool allZero;
 
+   public:
+    InitValueListExpr(SymbolEntry* se, ExprNode* expr = nullptr)
+        : ExprNode(se), expr(expr) {
+        type = se->getType();
+        childCnt = 0;
+        allZero = false;
+    };
+    void output(int level){};
+    ExprNode* getExpr() const { return expr; };
+    void addExpr(ExprNode* expr);
+    bool isEmpty() { return childCnt == 0; };
+    bool isFull();
+    void typeCheck(Type* retType = nullptr) {};
+    void genCode() {};
+    void fill();
+    void setAllZero() { allZero = true; }
+};
 #endif

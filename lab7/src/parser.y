@@ -2,6 +2,7 @@
     #include <iostream>
     #include <assert.h>
     #include <stack>
+    #include <cstring>
     #include "parser.h"
     extern Ast ast;
     int yylex();
@@ -10,6 +11,12 @@
     int paramCount=0;
     ArrayType* arrayType;
     std::stack<StmtNode*> WhileStmts;
+    int* arrayValue;
+    int notZeroNum = 0;
+    std::stack<InitValueListExpr*> stk;
+    InitValueListExpr* top;
+    int leftCnt = 0;
+    int idx;
 }
 
 %code requires {
@@ -25,6 +32,7 @@
     ExprNode* exprtype;
     Type* type;
     ListNode* listtype;
+    SymbolEntry* se;
 }
 
 %start Program
@@ -45,7 +53,7 @@
 %nterm <stmttype> FuncFParam FuncFParams
 %nterm <exprtype> FuncRParams
 %nterm <exprtype> Exp AddExp MulExp Cond LOrExp PrimaryExp UnaryExp LVal RelExp LAndExp EqExp
-%nterm <exprtype> ArrayIndices FuncArrayIndices
+%nterm <exprtype> ArrayIndices FuncArrayIndices ArrayInitVal ArrayInitValList
 %nterm <type> Type
 
 %precedence THEN
@@ -363,6 +371,106 @@ ArrayIndices
         $1->setNext($3);    // 多维
     }
     ;
+ArrayInitVal
+    : Exp {
+        $$ = $1;
+        if (!stk.empty()) {
+            int val = $1->getValue();
+            if (val)
+                notZeroNum++;
+            arrayValue[idx++] = val;
+
+            Type* arrTy = stk.top()->getSymPtr()->getType();
+            if (arrTy == TypeSystem::intType) {
+                    stk.top()->addExpr($1);
+            } else {
+                while (arrTy) {
+                    if (((ArrayType*)arrTy)->getElementType() != TypeSystem::intType) {
+                        arrTy = ((ArrayType*)arrTy)->getElementType();
+                        SymbolEntry* se = new ConstantSymbolEntry(arrTy);
+                        InitValueListExpr* list = new InitValueListExpr(se);
+                        stk.top()->addExpr(list);
+                        stk.push(list);
+                    } else {
+                        //Type* elemType = ((ArrayType*)arrTy)->getElementType();
+                        stk.top()->addExpr($1);
+
+                        while (stk.top()->isFull() && stk.size() != (long unsigned int)leftCnt) {
+                            arrTy = ((ArrayType*)arrTy)->getArrayType();
+                            stk.pop();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    | LBRACE RBRACE {   /* 一对花括号的情况{}，表示所有元素初始为 0 */
+        SymbolEntry* se;
+        ExprNode* list;
+        if (stk.empty()) {
+            // 如果只用一个{}初始化数组，那么栈一定为空
+            // 此时也没必要再加入栈了
+            memset(arrayValue, 0, arrayType->getSize());
+            idx += arrayType->getSize() / declType->getSize();
+            se = new ConstantSymbolEntry(arrayType);
+            list = new InitValueListExpr(se);
+        } else {
+            // 栈不空说明肯定不是只有{}
+            // 此时需要确定{}到底占了几个元素
+            Type* type = ((ArrayType*)(stk.top()->getSymPtr()->getType()))->getElementType();
+            int len = type->getSize() / declType->getSize();
+            memset(arrayValue + idx, 0, type->getSize());
+            idx += len;
+            se = new ConstantSymbolEntry(type);
+            list = new InitValueListExpr(se);
+            stk.top()->addExpr(list);
+            while (stk.top()->isFull() && stk.size() != (long unsigned int)leftCnt) {
+                stk.pop();
+            }
+        }
+        $$ = list;
+    }
+    | LBRACE {
+        SymbolEntry* se;
+        if (!stk.empty())
+            arrayType = ((ArrayType*)((ArrayType*)(stk.top()->getSymPtr()->getType()))->getElementType());
+        se = new ConstantSymbolEntry(arrayType);
+        if (arrayType->getElementType() != TypeSystem::intType) {
+            arrayType = (ArrayType*)(arrayType->getElementType());
+        }
+        InitValueListExpr* expr = new InitValueListExpr(se);
+        if (!stk.empty())
+            stk.top()->addExpr(expr);
+        stk.push(expr);
+        $<exprtype>$ = expr;
+        leftCnt++;  /* 左括号计数++ */
+    } 
+    ArrayInitValList RBRACE {
+        leftCnt--;  /* 左括号计数-- */
+        while (stk.top() != $<exprtype>2 && stk.size() > (long unsigned int)(leftCnt + 1))
+            stk.pop();
+        if (stk.top() == $<exprtype>2)
+            stk.pop();
+        $$ = $<exprtype>2;
+        if (!stk.empty()){
+            while (stk.top()->isFull() && stk.size() != (long unsigned int)leftCnt) {
+                stk.pop();
+            }
+        }
+        while ( idx % (((ArrayType*)($$->getSymPtr()->getType()))->getSize() / sizeof(int)) != 0)
+            arrayValue[idx++] = 0;
+        if (!stk.empty())
+            arrayType = (ArrayType*)( ((ArrayType*)(stk.top()->getSymPtr()->getType()))->getElementType());
+    }
+ArrayInitValList
+    : ArrayInitVal {
+        $$ = $1;
+    }
+    | ArrayInitValList COMMA ArrayInitVal {
+        $$ = $1;
+    }
+    ;
 DeclStmt
     : VarDeclStmt { $$ = $1; }
     | ConstDeclStmt { $$ = $1; }
@@ -464,6 +572,61 @@ VarDef
         $$=(StmtNode*)tem;
         delete []$1;
     }
+    |
+    ID ArrayIndices ASSIGN {
+        std::vector<int> vec;   //分别存放维度值
+        ExprNode* temp = $2;
+        // 保存数组维度，从高维到低维
+        while(temp){
+            vec.push_back(temp->getValue());
+            temp = (ExprNode*)(temp->getNext());
+        }
+
+        Type *type = declType;
+        Type* temp1;
+        while(!vec.empty()){
+        //嵌套数组类型
+            temp1 = new ArrayType(type, vec.back());
+            //考虑多维数组 每个元素是数组指针
+            //如果元素是数组 type设置为数组维度
+            if(type->isArray())
+                ((ArrayType*)type)->setArrayType(temp1);
+            type = temp1;
+            vec.pop_back();
+        }
+        // 保存最低维数据类型
+        arrayType = (ArrayType*)type;
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
+        $<se>$ = se;
+        arrayValue = new int[type->getSize()];  // 开辟数组空间
+    }
+    ArrayInitVal {
+        ((IdentifierSymbolEntry*)$<se>4)->setArrayValue(arrayValue);
+        ((IdentifierSymbolEntry*)$<se>4)->setNotZeroNum(notZeroNum);
+
+        if ((notZeroNum == 0) || ((InitValueListExpr*)$5)->isEmpty()){
+            ((IdentifierSymbolEntry*)$<se>4)->setAllZero();
+            ((InitValueListExpr*)$5)->setAllZero();
+        }
+
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist); // 标识符列表
+        if(!identifiers->lookup($1)){
+            identifiers->install($1, $<se>4);
+        }
+        else{
+            fprintf(stderr,"identifier %s is redefined\n",(char*)$1);
+            delete [](char*)$1;
+        }
+        tem->idlist.push_back(new Id($<se>4));
+        /* 插入一条nullptr，让idlist和assignlist对齐，暂时行得通 */
+        tem->assignlist.push_back(nullptr);
+ 
+        $$=(StmtNode*)tem;
+        delete []$1;
+    }
     ;
 VarDefList
     :
@@ -501,8 +664,64 @@ ConstDef
         tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
         $$=(StmtNode*)tem;
         //$$ = new DeclStmt(new Id(se));
-     }
-     ;
+    }
+    |
+    ID ArrayIndices ASSIGN {
+        std::vector<int> vec;   //分别存放维度值
+        ExprNode* temp = $2;
+        // 保存数组维度，从高维到低维
+        while(temp){
+            vec.push_back(temp->getValue());
+            temp = (ExprNode*)(temp->getNext());
+        }
+
+        Type *type = declType;
+        Type* temp1;
+        while(!vec.empty()){
+        //嵌套数组类型
+            temp1 = new ArrayType(type, vec.back());
+            //考虑多维数组 每个元素是数组指针
+            //如果元素是数组 type设置为数组维度
+            if(type->isArray())
+                ((ArrayType*)type)->setArrayType(temp1);
+            type = temp1;
+            vec.pop_back();
+        }
+        // 保存最低维数据类型
+        arrayType = (ArrayType*)type;
+        SymbolEntry* se;
+        se = new IdentifierSymbolEntry(type, $1, identifiers->getLevel());
+        ((IdentifierSymbolEntry*)se)->setConst();
+        $<se>$ = se;
+        arrayValue = new int[type->getSize()];  // 开辟数组空间
+    }
+    ArrayInitVal {
+        ((IdentifierSymbolEntry*)$<se>4)->setArrayValue(arrayValue);
+        ((IdentifierSymbolEntry*)$<se>4)->setNotZeroNum(notZeroNum);
+
+        if ((notZeroNum == 0) || ((InitValueListExpr*)$5)->isEmpty()){
+            ((IdentifierSymbolEntry*)$<se>4)->setAllZero();
+            ((InitValueListExpr*)$5)->setAllZero();
+        }
+
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
+        IdList *tem = new IdList(idlist, assignlist); // 标识符列表
+        if(!identifiers->lookup($1)){
+            identifiers->install($1, $<se>4);
+        }
+        else{
+            fprintf(stderr,"identifier %s is redefined\n",(char*)$1);
+            delete [](char*)$1;
+        }
+        tem->idlist.push_back(new Id($<se>4));
+        /* 插入一条nullptr，让idlist和assignlist对齐，暂时行得通 */
+        tem->assignlist.push_back(nullptr);
+ 
+        $$=(StmtNode*)tem;
+        delete []$1;
+    }
+    ;
 ConstDefList
     :
     ConstDef { $$ = $1;}
