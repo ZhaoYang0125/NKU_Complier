@@ -1,13 +1,21 @@
+int g = 0;
 
-int add(int a0[],int a1[], int a2[],int b0[],int b1[],int b2[],int c0[],int c1[],int c2[])
-{
-    return 0;
+int func(int n) {
+  g = g + n;
+  putint(g);
+  return g;
 }
 
-int main()
-{
-    int a0[3];int a1[3]; int a2[3];int b0[3];int b1[3];int b2[3];int c0[6];int c1[3];int c2[3];
-    add( a0, a1,  a2, b0, b1, b2, c0, c1, c2);
-
-    return 0;
+int main() {
+  int i;
+  if (!func(99) && func(100)) i = 1; else i = 0;
+  return 0;
 }
+
+
+/*int main(){
+  int a[2][2]={1,2,3,4};
+  putint(a[1][1]);putch(10);
+  return 0;
+}
+*/

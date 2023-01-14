@@ -7,9 +7,6 @@
 #include <fstream>
 #include "SymbolTable.h"
 
-static int fpStkOffset = 0;
-static bool reg3 = true;
-
 /* Hint:
 * MachineUnit: Compiler unit
 * MachineFunction: Function in assembly code 
