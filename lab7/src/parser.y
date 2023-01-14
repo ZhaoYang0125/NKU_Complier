@@ -652,9 +652,9 @@ VarDeclStmt
     ;
 ConstDef
     :
-     ID ASSIGN Exp {
-         std::vector<Id*> idlist;
-         std::vector<AssignStmt*> assignlist;
+    ID ASSIGN Exp {
+        std::vector<Id*> idlist;
+        std::vector<AssignStmt*> assignlist;
         IdList *tem = new IdList(idlist, assignlist);//标识符列表
         IdentifierSymbolEntry *se;
         se = new IdentifierSymbolEntry(declType, $1, identifiers->getLevel());

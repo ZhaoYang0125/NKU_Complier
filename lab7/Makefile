@@ -1,7 +1,7 @@
 SRC_PATH ?= src
 INC_PATH += include
 BUILD_PATH ?= build
-TEST_PATH ?= test/level*
+TEST_PATH ?= test
 OBJ_PATH ?= $(BUILD_PATH)/obj
 BINARY ?= $(BUILD_PATH)/compiler
 SYSLIB_PATH ?= sysyruntimelibrary
@@ -75,7 +75,7 @@ $(TEST_PATH)/%_std.s:$(TEST_PATH)/%.sy
 	@arm-linux-gnueabihf-gcc -x c $< -S -o $@ 
 
 $(TEST_PATH)/%.s:$(TEST_PATH)/%.sy
-	@timeout 10s $(BINARY) $< -o $@ -S 2>$(addsuffix .log, $(basename $@))
+	@timeout 5s $(BINARY) $< -o $@ -S 2>$(addsuffix .log, $(basename $@))
 	@[ $$? != 0 ] && echo "\033[1;31mCOMPILE FAIL:\033[0m $(notdir $<)" || echo "\033[1;32mCOMPILE SUCCESS:\033[0m $(notdir $<)"
 
 llvmir:$(LLVM_IR)

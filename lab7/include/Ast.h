@@ -2,7 +2,7 @@
 #define __AST_H__
 
 #include <fstream>
-#include<iostream>
+#include <iostream>
 #include "Operand.h"
 #include "Type.h"
 

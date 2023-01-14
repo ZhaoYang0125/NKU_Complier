@@ -550,7 +550,6 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
     && operands[0]->getDef()
     && operands[0]->getDef()->isAlloc())
     {
-        //std::cout<<"???"<<std::endl;
         // example: store r1, [r0, #4]
         //auto dst = genMachineOperand(operands[0]);
         auto src1 = genMachineReg(11);
@@ -562,14 +561,15 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         //     auto operand = genMachineVReg();
         //     cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
         //     src2 = operand;
-        // std::cout<<"???"<<std::endl;
         // }
-        TemporarySymbolEntry* tse=dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry());
-        if(tse->getParamNo()>3){
-            offset = abs(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset())+24;
-            auto src22 = genMachineImm(offset);
-            cur_block->InsertInst((new LoadMInstruction(cur_block, src, src1,src22)));
-        }
+
+        // TemporarySymbolEntry* tse=dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry());
+        // if(tse->getParamNo()>3){
+        //     offset = abs(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset())+4;
+        //     auto src22 = genMachineImm(offset);
+        //     cur_block->InsertInst((new LoadMInstruction(cur_block, src, src1,src22)));
+        // }
+
         cur_inst = new StoreMInstruction(cur_block, src, src1, src2);
         cur_block->InsertInst(cur_inst);
     }

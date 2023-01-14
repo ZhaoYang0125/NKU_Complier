@@ -107,6 +107,7 @@ void FunctionDef::genCode()
             func->params.push_back(addr2); 
         }
     }
+
     stmt->genCode();
 
     /**
@@ -450,7 +451,7 @@ void IfStmt::genCode()
 {
     Function *func;
     BasicBlock *then_bb, *end_bb;
-    
+
     func = builder->getInsertBB()->getParent();
     then_bb = new BasicBlock(func);
     end_bb = new BasicBlock(func);
@@ -461,7 +462,6 @@ void IfStmt::genCode()
     // end_bb -> addPred(then_bb);
     // then_bb -> addSucc(end_bb);//
 
-    
     Type* t = cond->getSymPtr()->getType();
     if(t->isInt() && ((IntType*) t)->getSize() == 32){
         cond->int2Bool();
