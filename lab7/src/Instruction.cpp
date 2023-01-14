@@ -566,7 +566,7 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         // }
         TemporarySymbolEntry* tse=dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry());
         if(tse->getParamNo()>3){
-            offset = abs(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset())+4;
+            offset = abs(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset())+24;
             auto src22 = genMachineImm(offset);
             cur_block->InsertInst((new LoadMInstruction(cur_block, src, src1,src22)));
         }

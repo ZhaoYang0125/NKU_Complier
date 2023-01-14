@@ -670,6 +670,20 @@ void UnaryExpr::genCode()
             src = temp;
         }
         new XorInstruction(dst, src, bb);
+
+        Operand* temp1 = new Operand(new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel()));
+        new CmpInstruction(CmpInstruction::NE, temp1, src, new Operand(new ConstantSymbolEntry(TypeSystem::intType, 1)), bb);
+        BasicBlock* bb = builder->getInsertBB();
+        Function* func = bb->getParent();
+        BasicBlock *truebb = new BasicBlock(func);
+        BasicBlock *falsebb = new BasicBlock(func);
+        BasicBlock *tempbb = new BasicBlock(func);
+        Instruction* temp = new CondBrInstruction(truebb,tempbb,dst,bb);
+        //this->falseList().push_back(temp);
+        this->trueList().push_back(temp);
+        temp=new UncondBrInstruction(falsebb, tempbb);
+        //this->trueList().push_back(temp);
+        this->falseList().push_back(temp);
     } 
     else if (op == SUB || op == ADD) 
     {
