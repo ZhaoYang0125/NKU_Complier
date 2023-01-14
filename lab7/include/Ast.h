@@ -2,6 +2,7 @@
 #define __AST_H__
 
 #include <fstream>
+#include<iostream>
 #include "Operand.h"
 #include "Type.h"
 
@@ -69,7 +70,22 @@ private:
     ExprNode* expr;
 public:
     enum {ADD, SUB, NOT};
-    UnaryExpr(SymbolEntry *se, int op, ExprNode* expr) : ExprNode(se), op(op), expr(expr){};
+    UnaryExpr(SymbolEntry *se, int op, ExprNode* expr) : ExprNode(se), op(op), expr(expr){
+        switch (op)
+        {
+        case UnaryExpr::NOT:
+            this->type=TypeSystem::boolType;
+            break;
+        case UnaryExpr::ADD:
+            this->type=TypeSystem::intType;
+            break;
+        case UnaryExpr::SUB:
+            this->type=TypeSystem::intType;
+            break;
+        default:
+            break;
+        }
+    };
     int getValue();
     void output(int level);
     void typeCheck(Type* retType=nullptr);
@@ -111,18 +127,22 @@ public:
         if (op >= BinaryExpr::AND && op <= BinaryExpr::NOTEQUAL) 
         {//判断是否为整数
             this->type = TypeSystem::boolType;
+            
             if (op == BinaryExpr::AND || op == BinaryExpr::OR) {
                 if (expr1->getType()->isInt() && expr1->getType()->getSize() == 32){
                     Int2BoolExpr* temp = new Int2BoolExpr(expr1);
                     this->expr1 = temp;
                 }
+                //std::cout<<"t->toStr()"<<std::endl;
                 if (expr2->getType()->isInt() && expr2->getType()->getSize() == 32){
                     Int2BoolExpr* temp = new Int2BoolExpr(expr2);
                     this->expr2 = temp;
                 }
+                
             }
         } 
         else{
+            
             type = TypeSystem::intType;
         }
     }; // new dst
