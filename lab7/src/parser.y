@@ -518,11 +518,9 @@ VarDef
             delete [](char*)$1;
             assert( !a);
         }
-        //$$ = new DeclStmt(new Id(se));
         tem->idlist.push_back(new Id(se));
         tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
         $$=(StmtNode*)tem;
-        //$$ = new Id(se);
         delete []$1;
     }
     |
@@ -664,7 +662,6 @@ ConstDef
         tem->idlist.push_back(new Id(se));
         tem->assignlist.push_back(new AssignStmt(new Id(se),$3));
         $$=(StmtNode*)tem;
-        //$$ = new DeclStmt(new Id(se));
     }
     |
     ID ArrayIndices ASSIGN {
@@ -741,7 +738,6 @@ ConstDeclStmt
     :
     CONST Type ConstDefList SEMICOLON{
         declType = $2;
-        //$$ = $3;
         $$ = new DeclStmt((IdList*)$3);
     }
     ;
@@ -797,7 +793,6 @@ FuncFParam
         }
         SymbolEntry* se;
         se = new IdentifierSymbolEntry(type, $2, identifiers->getLevel(),paramCount++);
-        //((IdentifierSymbolEntry*)se)->setAddr(new Operand(se));
         std::vector<Id*> idlist;
         std::vector<AssignStmt*> assignlist;
         IdList *tem = new IdList(idlist, assignlist); // 标识符列表

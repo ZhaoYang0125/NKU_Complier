@@ -550,18 +550,11 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
     && operands[0]->getDef()
     && operands[0]->getDef()->isAlloc())
     {
-        // example: store r1, [r0, #4]
-        //auto dst = genMachineOperand(operands[0]);
+        //  store r1, [r0, #4]
         auto src1 = genMachineReg(11);
         int offset = dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry()) ->getOffset();
         auto src2 = genMachineImm(offset);
-        // if(abs(offset) > 255)   /* 超出寻址范围 */
-        // {
-        //     /* 先加载到虚拟寄存器 再加载到对应寄存器 */
-        //     auto operand = genMachineVReg();
-        //     cur_block->InsertInst((new LoadMInstruction(cur_block, operand, src2)));
-        //     src2 = operand;
-        // }
+
         TemporarySymbolEntry* tse=dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry());
         if(tse->getParamNo()>3){
             offset = abs(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset())+24;
@@ -656,7 +649,6 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
 {
     // TODO
     auto cur_block = builder->getBlock();
-//    MachineOperand* dst = genMachineOperand(operands[0]);
     MachineOperand* src1 = genMachineOperand(operands[1]);
     MachineOperand* src2 = genMachineOperand(operands[2]);
     MachineInstruction* cur_inst = nullptr;

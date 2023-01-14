@@ -463,20 +463,6 @@ void MachineFunction::output()
     cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, new MachineOperand(MachineOperand::IMM, AllocSpace(0)));
     cur_inst->output();
 
-    // int offset=AllocSpace(0);
-    // if(offset!=0){
-    //     MachineOperand* size = new MachineOperand(MachineOperand::IMM, offset);
-    //     if (offset < -255 || offset > 255) {//偏移量太大
-    //         MachineOperand* r4 = new MachineOperand(MachineOperand::REG, 4);
-    //         cur_inst=new LoadMInstruction(nullptr, r4, size);
-    //         cur_inst->output();
-    //         cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp,r4);
-    //         cur_inst->output();
-    //     } else {
-    //         cur_inst=new BinaryMInstruction(nullptr, BinaryMInstruction::SUB, sp, sp, size);
-    //         cur_inst->output();
-    //     }
-    // }
     for(auto iter : block_list)
         iter->output();
     fprintf(yyout, "\n");

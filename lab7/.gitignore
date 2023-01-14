@@ -1,6 +1,6 @@
 .vscode
 build
-test/example
+test/bug
 lexer.cpp
 parser.cpp
 parser.h
